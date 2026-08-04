@@ -10,6 +10,7 @@ import {
   eightSeriesFixture,
   horizontalOrientationFixture,
   invalidScatterXFixture,
+  macLineRegressionFixture,
   negativeValuesFixture,
   percentageFixture,
   textCategoriesFixture,
@@ -29,6 +30,21 @@ const createFixtureGateway = (snapshot: SelectionSnapshot) => ({
 });
 
 describe("chart workflows", () => {
+  it("builds the exact Mac line regression selection without explicit options", async () => {
+    const gateway = createFixtureGateway(macLineRegressionFixture);
+
+    await new ChartService(gateway, supportedCapabilities).create("line");
+
+    expect(gateway.createChart.mock.calls[0][0]).toMatchObject({
+      kind: "line",
+      orientation: "columns",
+      series: [
+        { name: "A", categoryAddress: "'Fixture'!$A$2:$A$13", valuesAddress: "'Fixture'!$B$2:$B$13" },
+        { name: "B", categoryAddress: "'Fixture'!$A$2:$A$13", valuesAddress: "'Fixture'!$C$2:$C$13" },
+      ],
+    });
+  });
+
   it.each([
     ["column", "columnClustered"],
     ["columnStacked", "columnStacked"],

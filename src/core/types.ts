@@ -1,4 +1,5 @@
 export type SeriesOrientation = "columns" | "rows";
+export type SeriesOrientationMode = "auto" | SeriesOrientation;
 
 export type ChartKind =
   | "column"
@@ -56,7 +57,7 @@ export interface ChartOptions {
   widthCm?: number;
   heightCm?: number;
   legendPosition?: LegendPosition;
-  orientation?: SeriesOrientation;
+  orientation?: SeriesOrientationMode;
   showDataLabels?: boolean;
   addTrendline?: boolean;
 }

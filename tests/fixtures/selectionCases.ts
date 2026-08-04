@@ -93,6 +93,26 @@ export const horizontalOrientationFixture = fixture(
   [["General", "General", "General", "General"], ["General", "0", "0", "0"], ["General", "0", "0", "0"]],
 );
 
+export const macLineRegressionFixture = fixture(
+  "Fixture!A1:C13",
+  [
+    [null, "A", "B"],
+    ...Array.from({ length: 12 }, (_, index) => [36892 + index * 365, index + 1, 5]),
+  ],
+  [
+    ["", "A", "B"],
+    ...Array.from({ length: 12 }, (_, index) => [
+      `${2001 + index}-01-01`,
+      String(index + 1),
+      "5",
+    ]),
+  ],
+  [
+    ["General", "General", "General"],
+    ...Array.from({ length: 12 }, () => ["yyyy-mm-dd", "0", "0"]),
+  ],
+);
+
 export const invalidScatterXFixture = fixture(
   "Fixture!A1:B4",
   [["Label", "Value"], ["A", 1], ["B", 2], ["C", 3]],

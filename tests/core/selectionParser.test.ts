@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { getCellKind, parseSelection, quoteSheetName } from "../../src/core/selectionParser";
+import { horizontalOrientationFixture, macLineRegressionFixture } from "../fixtures/selectionCases";
 
 const snapshot = {
   worksheetName: "Data",
@@ -24,6 +25,24 @@ const snapshot = {
 };
 
 describe("parseSelection", () => {
+  it("automatically treats the exact Mac regression range as column-oriented", () => {
+    expect(parseSelection(macLineRegressionFixture)).toMatchObject({
+      orientation: "columns",
+      categoryAddress: "'Fixture'!$A$2:$A$13",
+      series: [
+        { name: "A", valuesAddress: "'Fixture'!$B$2:$B$13" },
+        { name: "B", valuesAddress: "'Fixture'!$C$2:$C$13" },
+      ],
+    });
+  });
+
+  it("automatically treats a wide matrix with row labels as row-oriented", () => {
+    expect(parseSelection(horizontalOrientationFixture)).toMatchObject({
+      orientation: "rows",
+      categoryAddress: "'Fixture'!$B$1:$D$1",
+    });
+  });
+
   it("uses row one as headers and column one as categories", () => {
     const parsed = parseSelection(snapshot, "columns");
 

@@ -5,6 +5,7 @@ import type {
   ParsedSeries,
   SelectionSnapshot,
   SeriesOrientation,
+  SeriesOrientationMode,
 } from "./types";
 
 export function quoteSheetName(name: string): string {
@@ -13,7 +14,7 @@ export function quoteSheetName(name: string): string {
 
 export function parseSelection(
   snapshot: SelectionSnapshot,
-  orientation: SeriesOrientation = "columns",
+  orientation: SeriesOrientationMode = "auto",
 ): ParsedSelection {
   assertRectangular(snapshot);
 
@@ -24,16 +25,59 @@ export function parseSelection(
     });
   }
 
+  const resolvedOrientation = orientation === "auto" ? inferOrientation(snapshot) : orientation;
   const title = titleInFirstRow(snapshot);
   const titleRows = title === undefined ? 0 : 1;
   const headerRow = titleRows;
   const hasHeader = isHeaderRow(snapshot, headerRow);
   const headerRows = titleRows + (hasHeader ? 1 : 0);
 
-  if (orientation === "columns") {
+  if (resolvedOrientation === "columns") {
     return parseColumns(snapshot, title, headerRows, hasHeader);
   }
   return parseRows(snapshot, title, headerRows, hasHeader);
+}
+
+function inferOrientation(snapshot: SelectionSnapshot): SeriesOrientation {
+  const titleRows = titleInFirstRow(snapshot) === undefined ? 0 : 1;
+  const edgeRow = titleRows;
+  const topLabels = countTextCellsInRow(snapshot, edgeRow, 1);
+  const leftLabels = countTextCellsInColumn(snapshot, 0, edgeRow + 1);
+
+  if (topLabels > 0 && leftLabels === 0) {
+    return "columns";
+  }
+  if (leftLabels > 0 && topLabels === 0) {
+    return "rows";
+  }
+  return snapshot.columnCount > snapshot.rowCount - titleRows ? "rows" : "columns";
+}
+
+function countTextCellsInRow(snapshot: SelectionSnapshot, row: number, startColumn: number): number {
+  if (row >= snapshot.rowCount) {
+    return 0;
+  }
+  return snapshot.values[row]
+    .slice(startColumn)
+    .filter((value, index) =>
+      getCellKind(
+        value,
+        snapshot.texts[row][startColumn + index],
+        snapshot.numberFormats[row][startColumn + index],
+      ) === "text",
+    ).length;
+}
+
+function countTextCellsInColumn(snapshot: SelectionSnapshot, column: number, startRow: number): number {
+  return snapshot.values
+    .slice(startRow)
+    .filter((row, index) =>
+      getCellKind(
+        row[column],
+        snapshot.texts[startRow + index][column],
+        snapshot.numberFormats[startRow + index][column],
+      ) === "text",
+    ).length;
 }
 
 function parseColumns(
