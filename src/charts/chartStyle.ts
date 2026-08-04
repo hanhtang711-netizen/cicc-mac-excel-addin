@@ -72,7 +72,14 @@ function resolveValueAxisNumberFormat(sourceFormat: string): string | undefined 
 }
 
 function resolveCategoryAxisNumberFormat(categoryFormat: string | undefined): string | undefined {
-  return categoryFormat !== undefined && /[dmy]/i.test(categoryFormat) ? "yyyy-mm-dd" : undefined;
+  return categoryFormat !== undefined && isDateLikeFormat(categoryFormat) ? "yyyy-mm-dd" : undefined;
+}
+
+function isDateLikeFormat(numberFormat: string): boolean {
+  const formatWithoutLiterals = numberFormat
+    .replace(/"(?:[^"]|"")*"/g, "")
+    .replace(/\\./g, "");
+  return /(?:^|[^a-z])(?:d+|m+|y+|h+|s+)(?:[^a-z]|$)/i.test(formatWithoutLiterals);
 }
 
 function resolvePlacement(input: ChartStyleInput): ChartStylePlan["placement"] {

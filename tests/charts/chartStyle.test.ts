@@ -54,6 +54,17 @@ describe("CICC chart style", () => {
     expect(style.categoryAxisNumberFormat).toBe("yyyy-mm-dd");
   });
 
+  it("does not treat quoted currency text as a date-like category format", () => {
+    const style = buildChartStylePlan({
+      seriesCount: 1,
+      options: {},
+      sourceFormat: "General",
+      categoryFormat: "\"RMB\" #,##0",
+    });
+
+    expect(style.categoryAxisNumberFormat).toBeUndefined();
+  });
+
   it("applies the CICC base appearance and preserves a selected legend position", () => {
     const style = buildChartStylePlan({
       seriesCount: 1,
