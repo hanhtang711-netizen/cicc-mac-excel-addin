@@ -1,3 +1,151 @@
 :root {
   font-family: Arial, "Microsoft YaHei", sans-serif;
+  color: #242424;
+  background: #ffffff;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: #ffffff;
+}
+
+.task-pane {
+  padding: 16px;
+}
+
+.pane-header {
+  margin-bottom: 16px;
+}
+
+h1 {
+  margin: 0 0 8px;
+  color: #640000;
+  font-size: 16px;
+  line-height: 24px;
+}
+
+.pane-header p,
+.status {
+  margin: 0;
+  color: #616161;
+  font-size: 12px;
+  line-height: 18px;
+}
+
+fieldset {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+label {
+  color: #333333;
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.optional {
+  color: #767676;
+}
+
+input,
+select,
+button {
+  width: 100%;
+  min-height: 36px;
+  border: 1px solid #a6a6a6;
+  border-radius: 2px;
+  padding: 6px 8px;
+  color: #242424;
+  font: inherit;
+  background: #ffffff;
+}
+
+input:hover,
+select:hover {
+  border-color: #640000;
+}
+
+input:focus-visible,
+select:focus-visible,
+button:focus-visible {
+  outline: 2px solid #640000;
+  outline-offset: 2px;
+}
+
+.field-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.field-row label {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+}
+
+.checkbox-row input {
+  width: 16px;
+  min-height: 16px;
+  margin: 0;
+}
+
+button {
+  margin-top: 8px;
+  border-color: #640000;
+  color: #ffffff;
+  font-weight: 600;
+  background: #640000;
+  cursor: pointer;
+}
+
+button:hover:not(:disabled) {
+  border-color: #8a2626;
+  background: #8a2626;
+}
+
+button:active:not(:disabled) {
+  background: #4d0000;
+}
+
+fieldset:disabled {
+  opacity: 0.64;
+}
+
+button:disabled {
+  border-color: #a6a6a6;
+  color: #767676;
+  background: #e5e5e5;
+  cursor: not-allowed;
+}
+
+.status {
+  min-height: 36px;
+  margin-top: 12px;
+}
+
+.status[data-state="success"] {
+  color: #1c5b35;
+}
+
+.status[data-state="warning"] {
+  color: #8a4b00;
+}
+
+.status[data-state="error"] {
+  color: #8a2626;
 }

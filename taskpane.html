@@ -7,7 +7,69 @@
     <title>中金高级图表</title>
   </head>
   <body>
-    <main id="app"></main>
+    <main id="app" class="task-pane">
+      <header class="pane-header">
+        <h1>中金图表工具</h1>
+        <p>基于当前工作表选区配置并生成图表。</p>
+      </header>
+
+      <form id="advanced-chart-form" novalidate>
+        <fieldset id="chart-form-controls" disabled>
+          <label for="kind">图表类型</label>
+          <select id="kind" name="kind" required></select>
+
+          <label for="title">标题 <span class="optional">（可选）</span></label>
+          <input id="title" name="title" type="text" autocomplete="off" />
+
+          <label for="size-preset">尺寸</label>
+          <select id="size-preset" name="sizePreset" required>
+            <option value="small">小</option>
+            <option value="medium" selected>中</option>
+            <option value="large">大</option>
+            <option value="custom">自定义</option>
+          </select>
+
+          <div id="custom-size-fields" class="field-row" hidden>
+            <div>
+              <label for="width-cm">宽度（厘米）</label>
+              <input id="width-cm" name="widthCm" type="number" min="0.1" step="0.1" inputmode="decimal" />
+            </div>
+            <div>
+              <label for="height-cm">高度（厘米）</label>
+              <input id="height-cm" name="heightCm" type="number" min="0.1" step="0.1" inputmode="decimal" />
+            </div>
+          </div>
+
+          <label for="legend-position">图例位置</label>
+          <select id="legend-position" name="legendPosition">
+            <option value="bottom" selected>下方</option>
+            <option value="top">上方</option>
+            <option value="left">左侧</option>
+            <option value="right">右侧</option>
+            <option value="none">不显示</option>
+          </select>
+
+          <label for="orientation">系列方向</label>
+          <select id="orientation" name="orientation">
+            <option value="columns" selected>按列</option>
+            <option value="rows">按行</option>
+          </select>
+
+          <label class="checkbox-row" for="show-data-labels">
+            <input id="show-data-labels" name="showDataLabels" type="checkbox" />
+            显示数据标签
+          </label>
+
+          <label id="trendline-field" class="checkbox-row" for="add-trendline" hidden>
+            <input id="add-trendline" name="addTrendline" type="checkbox" checked />
+            添加线性趋势线
+          </label>
+
+          <button type="submit">生成图表</button>
+        </fieldset>
+      </form>
+      <p id="status" class="status" aria-live="polite">选择图表类型和选项后，点击“生成图表”。</p>
+    </main>
     <script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
     <script type="module" src="/src/taskpane.ts"></script>
   </body>
