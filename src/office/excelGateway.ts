@@ -54,7 +54,7 @@ export class ExcelGateway {
           }
           addScatterSeries(worksheet, chart, plan, style);
         } else {
-          applySeriesColors(chart.series.items, style.seriesColors);
+          applySeriesStyles(chart.series.items, plan, style);
         }
 
         if (plan.kind === "pie" || plan.kind === "pieExploded") {
@@ -132,11 +132,16 @@ function addScatterSeries(
 ): void {
   plan.series.forEach((seriesPlan, index) => {
     const series = chart.series.add(seriesPlan.name, index);
+    const color = style.seriesColors[index];
     series.setXAxisValues(worksheet.getRange(localAddress(seriesPlan.categoryAddress)));
     series.setValues(worksheet.getRange(localAddress(seriesPlan.valuesAddress)));
-    setSeriesColor(series, style.seriesColors[index]);
+    applySeriesStyle(series, color, plan, style);
     if (plan.addLinearTrendline) {
-      series.trendlines.add(Excel.ChartTrendlineType.linear);
+      const trendline = series.trendlines.add(Excel.ChartTrendlineType.linear);
+      if (color !== undefined) {
+        trendline.format.line.color = color;
+        trendline.format.line.weight = style.lineWidthPoints;
+      }
     }
   });
 }
@@ -220,16 +225,43 @@ async function autofitWithinBounds(
   await context.sync();
 }
 
-function applySeriesColors(series: readonly Excel.ChartSeries[], colors: readonly string[]): void {
-  series.forEach((item, index) => setSeriesColor(item, colors[index]));
+function applySeriesStyles(
+  series: readonly Excel.ChartSeries[],
+  plan: ChartPlan,
+  style: ChartStylePlan,
+): void {
+  series.forEach((item, index) => applySeriesStyle(item, style.seriesColors[index], plan, style));
 }
 
-function setSeriesColor(series: Excel.ChartSeries, color: string | undefined): void {
+function applySeriesStyle(
+  series: Excel.ChartSeries,
+  color: string | undefined,
+  plan: ChartPlan,
+  style: ChartStylePlan,
+): void {
   if (color === undefined) {
     return;
   }
-  series.format.fill.setSolidColor(color);
+
+  if (style.seriesStyle === "fill-no-border") {
+    series.format.fill.setSolidColor(color);
+    series.format.line.clear();
+    return;
+  }
+  if (style.seriesStyle === "pie-points") {
+    return;
+  }
+
   series.format.line.color = color;
+  series.format.line.weight = style.lineWidthPoints;
+  series.smooth = style.smoothLines;
+  series.markerStyle = plan.kind === "lineMarkers" || style.seriesStyle === "scatter"
+    ? "Automatic"
+    : "None";
+  if (series.markerStyle !== "None") {
+    series.markerBackgroundColor = color;
+    series.markerForegroundColor = color;
+  }
 }
 
 async function colorPiePoints(

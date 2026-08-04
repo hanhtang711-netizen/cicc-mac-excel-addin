@@ -154,7 +154,7 @@ describe("ExcelGateway.createChart", () => {
     activeWorksheet = other.worksheet;
     const switchedPlan = buildChartPlan(parseSelection(snapshot), "scatterTrend");
 
-    await gateway.createChart(switchedPlan, style);
+    await gateway.createChart(switchedPlan, { ...style, seriesStyle: "scatter" });
 
     expect(snapshot.worksheetName).toBe("Data");
     expect(getItem).toHaveBeenCalledWith("Data");
@@ -174,19 +174,45 @@ describe("ExcelGateway.createChart", () => {
 
     expect(fake.chartsAdd).toHaveBeenCalledWith("ColumnClustered", fake.sourceRange, "Columns");
     expect(fake.chart).toMatchObject({
-      width: 326,
-      height: 190,
+      width: 453.5433072,
+      height: 255.1181103,
       left: 338,
       top: 40,
     });
-    expect(fake.chart.title).toMatchObject({ visible: true, text: "Weekly prices" });
+    expect(fake.chart.title).toMatchObject({ visible: false });
     expect(fake.chart.legend).toMatchObject({ visible: true, position: "Bottom" });
     expect(fake.series[0].format.fill.setSolidColor).toHaveBeenCalledWith("#640000");
     expect(fake.series[1].format.fill.setSolidColor).toHaveBeenCalledWith("#8A2626");
-    expect(fake.chart.dataLabels.showValue).toBe(true);
+    expect(fake.chart.dataLabels.showValue).toBe(false);
     expect(fake.valueAxis.numberFormat).toBe("0.0%");
     expect(fake.categoryAxis.numberFormat).toBe("yyyy-mm-dd");
-    expect(fake.valueAxis.majorGridlines.format.line.color).toBe("#D9D9D9");
+    expect(fake.valueAxis.majorGridlines.format.line.color).toBe("#FFFFFF");
+  });
+
+  it("styles line series without touching the unsupported Mac series fill", async () => {
+    const fake = makeChartHarness();
+    stubExcel(fake.context);
+
+    await new ExcelGateway().createChart(
+      { ...plan, kind: "line", excelType: "line" },
+      { ...style, seriesStyle: "line", smoothLines: true },
+    );
+
+    expect(fake.series[0].format.fill.setSolidColor).not.toHaveBeenCalled();
+    expect(fake.series[0].format.line.color).toBe("#640000");
+    expect(fake.series[0].format.line.weight).toBe(1.5);
+    expect(fake.series[0].smooth).toBe(true);
+    expect(fake.series[0].markerStyle).toBe("None");
+  });
+
+  it("fills column series and removes their outlines", async () => {
+    const fake = makeChartHarness();
+    stubExcel(fake.context);
+
+    await new ExcelGateway().createChart(plan, { ...style, seriesStyle: "fill-no-border" });
+
+    expect(fake.series[0].format.fill.setSolidColor).toHaveBeenCalledWith("#640000");
+    expect(fake.series[0].format.line.clear).toHaveBeenCalledOnce();
   });
 
   it("places a chart below the source range when requested", async () => {
@@ -211,7 +237,7 @@ describe("ExcelGateway.createChart", () => {
       kind: "scatterTrend",
       excelType: "xyscatter",
       addLinearTrendline: true,
-    }, style);
+    }, { ...style, seriesStyle: "scatter" });
 
     expect(fake.chartsAdd).toHaveBeenCalledWith("XYScatter", fake.sourceRange, "Columns");
     expect(fake.defaultSeries.delete).toHaveBeenCalledOnce();
@@ -222,6 +248,10 @@ describe("ExcelGateway.createChart", () => {
     expect(fake.addedSeries[1].setValues).toHaveBeenCalledWith(fake.ranges.get("$C$2:$C$4"));
     expect(fake.addedSeries[0].trendlines.add).toHaveBeenCalledWith("Linear");
     expect(fake.addedSeries[1].trendlines.add).toHaveBeenCalledWith("Linear");
+    expect(fake.addedSeries[0].format.fill.setSolidColor).not.toHaveBeenCalled();
+    expect(fake.addedSeries[0].format.line.color).toBe("#640000");
+    expect(fake.addedSeries[0].trendline.format.line.color).toBe("#640000");
+    expect(fake.addedSeries[0].trendline.format.line.weight).toBe(1.5);
   });
 
   it("colors pie points individually in source order", async () => {
@@ -353,15 +383,23 @@ function makeChartHarness(name = "Data") {
     { format: { fill: makeFill() } },
     { format: { fill: makeFill() } },
   ];
-  const makeSeries = (seriesPoints: typeof points = []) => ({
+  const makeSeries = (seriesPoints: typeof points = []) => {
+    const trendline = { format: { line: { color: "", weight: 0 } } };
+    return {
     name: "",
     delete: vi.fn(),
     setXAxisValues: vi.fn(),
     setValues: vi.fn(),
-    format: { fill: makeFill(), line: { color: "" } },
-    trendlines: { add: vi.fn() },
+    smooth: false,
+    markerStyle: "Automatic",
+    markerBackgroundColor: "",
+    markerForegroundColor: "",
+    format: { fill: makeFill(), line: { color: "", weight: 0, clear: vi.fn() } },
+    trendline,
+    trendlines: { add: vi.fn(() => trendline) },
     points: { items: seriesPoints, load: vi.fn() },
-  });
+    };
+  };
   const series = [makeSeries(points), makeSeries()];
   const defaultSeries = series[0];
   const addedSeries: ReturnType<typeof makeSeries>[] = [];
