@@ -90,7 +90,7 @@ describe("chart workflows", () => {
     expect(style.seriesColors).toEqual(["#640000"]);
   });
 
-  it("carries title-row and advanced options into the plan and style", async () => {
+  it("ignores legacy visual overrides and applies the fixed Skill style", async () => {
     const gateway = createFixtureGateway(titleRowFixture);
 
     await new ChartService(gateway, supportedCapabilities).create("lineMarkers", {
@@ -104,27 +104,27 @@ describe("chart workflows", () => {
 
     const [plan, style] = gateway.createChart.mock.calls[0];
     expect(plan).toMatchObject({
-      title: "Override",
-      sizePreset: "custom",
-      widthCm: 14,
-      heightCm: 8,
-      showDataLabels: true,
       series: [{ valuesAddress: "'Fixture'!$B$3:$B$5" }, { valuesAddress: "'Fixture'!$C$3:$C$5" }],
     });
+    expect(plan).not.toHaveProperty("title");
+    expect(plan).not.toHaveProperty("showDataLabels");
+    expect(plan).not.toHaveProperty("sizePreset");
     expect(style).toMatchObject({
-      legendPosition: "top",
+      legendPosition: "bottom",
+      showTitle: false,
+      showDataLabels: false,
       categoryAxisNumberFormat: "yyyy-mm-dd",
     });
-    expect(style.widthPoints).toBeCloseTo(396.8503938);
-    expect(style.heightPoints).toBeCloseTo(226.7716536);
+    expect(style.widthPoints).toBeCloseTo(453.5433072);
+    expect(style.heightPoints).toBeCloseTo(255.1181103);
   });
 
-  it("uses the standalone title row when no title override is supplied", async () => {
+  it("does not turn a standalone data title into a chart title", async () => {
     const gateway = createFixtureGateway(titleRowFixture);
 
     await new ChartService(gateway, supportedCapabilities).create("column");
 
-    expect(gateway.createChart.mock.calls[0][0]).toMatchObject({ title: "Weekly Prices" });
+    expect(gateway.createChart.mock.calls[0][0]).not.toHaveProperty("title");
   });
 
   it("maps row-oriented categories and series without transposing the fixture", async () => {

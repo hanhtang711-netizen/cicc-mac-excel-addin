@@ -6,8 +6,33 @@ import {
 } from "../../src/charts/chartStyle";
 
 describe("CICC chart style", () => {
+  it("locks every line chart to the approved Skill contract", () => {
+    const style = buildChartStylePlan({
+      kind: "line",
+      seriesCount: 2,
+      sourceFormat: "0.0%",
+      categoryFormat: "yyyy-mm-dd",
+      selectionColumn: 0,
+      selectionColumnCount: 3,
+    });
+
+    expect(style).toMatchObject({
+      seriesStyle: "line",
+      widthPoints: cmToPoints(16),
+      heightPoints: cmToPoints(9),
+      legendPosition: "bottom",
+      legendOverlay: false,
+      legendFontSizePoints: 9,
+      showTitle: false,
+      showDataLabels: false,
+      showGridlines: false,
+      lineWidthPoints: 1.5,
+      smoothLines: true,
+    });
+  });
+
   it("cycles the six exact series colors", () => {
-    const style = buildChartStylePlan({ seriesCount: 8, options: {}, sourceFormat: "0.0%" });
+    const style = buildChartStylePlan({ kind: "line", seriesCount: 8, sourceFormat: "0.0%" });
 
     expect(style.seriesColors).toEqual([
       ...CICC_SERIES_COLORS,
@@ -17,35 +42,29 @@ describe("CICC chart style", () => {
     expect(style.warnings).toContain("series_palette_reused");
   });
 
-  it("uses the medium preset and percentage precision", () => {
-    const style = buildChartStylePlan({ seriesCount: 2, options: {}, sourceFormat: "0.0%" });
+  it("uses the fixed dimensions and percentage precision", () => {
+    const style = buildChartStylePlan({ kind: "column", seriesCount: 2, sourceFormat: "0.0%" });
 
-    expect(style.widthPoints).toBeCloseTo(cmToPoints(11.5), 4);
-    expect(style.heightPoints).toBeCloseTo(cmToPoints(6.7), 4);
+    expect(style.widthPoints).toBeCloseTo(cmToPoints(16), 4);
+    expect(style.heightPoints).toBeCloseTo(cmToPoints(9), 4);
     expect(style.valueAxisNumberFormat).toBe("0.0%");
     expect(style.legendPosition).toBe("bottom");
   });
 
-  it("uses the requested custom dimensions only when both are finite and positive", () => {
-    const style = buildChartStylePlan({
-      seriesCount: 1,
-      options: { sizePreset: "custom", widthCm: 14, heightCm: 8 },
-      sourceFormat: "General",
-    });
-
-    expect(style.widthPoints).toBeCloseTo(396.8503938, 4);
-    expect(style.heightPoints).toBeCloseTo(226.7716536, 4);
-    expect(() => buildChartStylePlan({
-      seriesCount: 1,
-      options: { sizePreset: "custom", widthCm: 0, heightCm: 8 },
-      sourceFormat: "General",
-    })).toThrow("invalid_chart_dimensions");
+  it.each([
+    ["column", "fill-no-border"],
+    ["bar", "fill-no-border"],
+    ["lineMarkers", "line"],
+    ["scatterTrend", "scatter"],
+    ["pie", "pie-points"],
+  ] as const)("maps %s to its type-specific series style", (kind, seriesStyle) => {
+    expect(buildChartStylePlan({ kind, seriesCount: 1, sourceFormat: "General" }).seriesStyle).toBe(seriesStyle);
   });
 
   it("preserves supported percentage formats and normalizes date-like categories", () => {
     const style = buildChartStylePlan({
       seriesCount: 1,
-      options: {},
+      kind: "line",
       sourceFormat: "0.00%",
       categoryFormat: "m/d/yyyy",
     });
@@ -57,7 +76,7 @@ describe("CICC chart style", () => {
   it("does not treat quoted currency text as a date-like category format", () => {
     const style = buildChartStylePlan({
       seriesCount: 1,
-      options: {},
+      kind: "column",
       sourceFormat: "General",
       categoryFormat: "\"RMB\" #,##0",
     });
@@ -65,20 +84,21 @@ describe("CICC chart style", () => {
     expect(style.categoryAxisNumberFormat).toBeUndefined();
   });
 
-  it("applies the CICC base appearance and preserves a selected legend position", () => {
+  it("applies the fixed CICC base appearance", () => {
     const style = buildChartStylePlan({
+      kind: "column",
       seriesCount: 1,
-      options: { legendPosition: "right" },
       sourceFormat: "0.000%",
     });
 
     expect(style).toMatchObject({
-      legendPosition: "right",
+      legendPosition: "bottom",
+      legendOverlay: false,
       chartAreaFill: "#FFFFFF",
       plotAreaFill: "#FFFFFF",
       showOuterBorder: false,
       textSizePoints: 8,
-      majorGridlineColor: "#D9D9D9",
+      showGridlines: false,
       valueAxisNumberFormat: undefined,
     });
   });
@@ -86,7 +106,7 @@ describe("CICC chart style", () => {
   it("plans right placement except where the estimated chart would cross Excel's final column", () => {
     const right = buildChartStylePlan({
       seriesCount: 1,
-      options: {},
+      kind: "column",
       sourceFormat: "General",
       selectionColumn: 16380,
       selectionColumnCount: 2,
@@ -94,7 +114,7 @@ describe("CICC chart style", () => {
     });
     const below = buildChartStylePlan({
       seriesCount: 1,
-      options: {},
+      kind: "column",
       sourceFormat: "General",
       selectionColumn: 16380,
       selectionColumnCount: 2,

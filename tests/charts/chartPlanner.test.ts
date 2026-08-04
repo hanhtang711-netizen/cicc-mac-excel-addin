@@ -109,6 +109,16 @@ describe("buildChartPlan", () => {
     expect(plan.addLinearTrendline).toBe(true);
   });
 
+  it("keeps visual overrides out of the strict chart plan", () => {
+    const plan = buildChartPlan(parsedSelection, "lineMarkers", {});
+
+    expect(plan).not.toHaveProperty("title");
+    expect(plan).not.toHaveProperty("showDataLabels");
+    expect(plan).not.toHaveProperty("sizePreset");
+    expect(plan).not.toHaveProperty("widthCm");
+    expect(plan).not.toHaveProperty("heightCm");
+  });
+
   it("allows the advanced pane to disable a scatter trendline", () => {
     expect(buildChartPlan(parsedSelection, "scatterTrend", { addTrendline: false }).addLinearTrendline).toBe(
       false,
@@ -167,15 +177,4 @@ describe("buildChartPlan", () => {
     expect(() => buildChartPlan(mixedY, "scatterTrend", {})).toThrow("scatter_requires_numeric_x");
   });
 
-  it("carries custom dimensions into the chart plan", () => {
-    const plan = buildChartPlan(parsedSelection, "column", {
-      sizePreset: "custom",
-      widthCm: 14,
-      heightCm: 8,
-    });
-
-    expect(plan.sizePreset).toBe("custom");
-    expect(plan.widthCm).toBe(14);
-    expect(plan.heightCm).toBe(8);
-  });
 });

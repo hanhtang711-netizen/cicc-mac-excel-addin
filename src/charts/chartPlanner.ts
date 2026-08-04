@@ -26,11 +26,6 @@ export function buildChartPlan(
       categoryAddress: parsed.categoryAddress,
       valuesAddress: series.valuesAddress,
     })),
-    sizePreset: options.sizePreset ?? "medium",
-    ...(options.widthCm === undefined ? {} : { widthCm: options.widthCm }),
-    ...(options.heightCm === undefined ? {} : { heightCm: options.heightCm }),
-    ...(options.title ?? parsed.title ? { title: options.title ?? parsed.title } : {}),
-    showDataLabels: options.showDataLabels ?? false,
     addLinearTrendline: kind === "scatterTrend" && options.addTrendline !== false,
   };
 }

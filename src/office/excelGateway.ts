@@ -265,17 +265,14 @@ function applyChartStyle(
     ? sourceRange.top + sourceRange.height + style.placement.gutterPoints
     : sourceRange.top;
 
-  chart.title.visible = plan.title !== undefined;
-  if (plan.title !== undefined) {
-    chart.title.text = plan.title;
-  }
+  chart.title.visible = style.showTitle;
 
   chart.legend.visible = style.legendPosition !== "none";
   if (style.legendPosition !== "none") {
     chart.legend.position = resolveLegendPosition(style.legendPosition);
   }
 
-  chart.dataLabels.showValue = plan.showDataLabels;
+  chart.dataLabels.showValue = style.showDataLabels;
   chart.format.fill.setSolidColor(style.chartAreaFill);
   chart.plotArea.format.fill.setSolidColor(style.plotAreaFill);
   if (!style.showOuterBorder) {

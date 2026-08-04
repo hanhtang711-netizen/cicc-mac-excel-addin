@@ -75,13 +75,10 @@ export interface ChartPlan {
   sourceAddress: string;
   orientation: SeriesOrientation;
   series: ChartSeriesPlan[];
-  sizePreset: ChartSizePreset;
-  widthCm?: number;
-  heightCm?: number;
-  title?: string;
-  showDataLabels: boolean;
   addLinearTrendline: boolean;
 }
+
+export type ChartSeriesStyle = "fill-no-border" | "line" | "scatter" | "pie-points";
 
 export interface ChartPlacementPlan {
   side: "right" | "below";
@@ -89,8 +86,8 @@ export interface ChartPlacementPlan {
 }
 
 export interface ChartStyleInput {
+  kind: ChartKind;
   seriesCount: number;
-  options: ChartOptions;
   sourceFormat: string;
   categoryFormat?: string;
   selectionColumn?: number;
@@ -100,12 +97,20 @@ export interface ChartStyleInput {
 
 export interface ChartStylePlan {
   seriesColors: string[];
+  seriesStyle: ChartSeriesStyle;
   widthPoints: number;
   heightPoints: number;
   legendPosition: LegendPosition;
+  legendOverlay: boolean;
+  legendFontSizePoints: number;
   chartAreaFill: string;
   plotAreaFill: string;
   showOuterBorder: boolean;
+  showTitle: boolean;
+  showDataLabels: boolean;
+  showGridlines: boolean;
+  lineWidthPoints: number;
+  smoothLines: boolean;
   textSizePoints: number;
   majorGridlineColor: string;
   valueAxisNumberFormat: string | undefined;

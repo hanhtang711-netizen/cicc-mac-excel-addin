@@ -33,8 +33,8 @@ export class ChartService {
     const parsed = parseSelection(snapshot, options.orientation);
     const plan = buildChartPlan(parsed, kind, options);
     const style = buildChartStylePlan({
+      kind,
       seriesCount: plan.series.length,
-      options,
       sourceFormat: parsed.numberFormats[parsed.headerRows]?.[1] ?? "General",
       categoryFormat: parsed.numberFormats[parsed.headerRows]?.[0] ?? "General",
       selectionColumn: snapshot.columnIndex,
