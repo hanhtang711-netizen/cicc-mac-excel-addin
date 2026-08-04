@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseSelection, quoteSheetName } from "../../src/core/selectionParser";
+import { getCellKind, parseSelection, quoteSheetName } from "../../src/core/selectionParser";
 
 const snapshot = {
   worksheetName: "Data",
@@ -35,7 +35,7 @@ describe("parseSelection", () => {
       "'Data'!$B$2:$B$4",
       "'Data'!$C$2:$C$4",
     ]);
-    expect(parsed.categoryKinds).toEqual(["number", "number", "number"]);
+    expect(parsed.categoryKinds).toEqual(["date", "date", "date"]);
     expect(parsed.series.map((series) => series.valueKinds)).toEqual([
       ["number", "number", "number"],
       ["number", "number", "number"],
@@ -127,5 +127,14 @@ describe("parseSelection", () => {
     };
 
     expect(() => parseSelection(titleAndHeaderOnly, "columns")).toThrow("unsupported_layout");
+  });
+});
+
+describe("getCellKind", () => {
+  it("recognizes date tokens while ignoring quoted and escaped numeric-format literals", () => {
+    expect(getCellKind(46023, "2026-01-01", "yyyy-mm-dd")).toBe("date");
+    expect(getCellKind(100, "100.0", "\"USD\" #,##0.0")).toBe("number");
+    expect(getCellKind(100, "100.0", "\"total \"\"m\"\"\" #,##0.0")).toBe("number");
+    expect(getCellKind(100, "100.0", "0.0 \\m")).toBe("number");
   });
 });

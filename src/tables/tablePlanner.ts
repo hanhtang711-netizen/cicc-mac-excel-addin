@@ -82,11 +82,6 @@ function hasHeader(snapshot: SelectionSnapshot): boolean {
 function dataCellKinds(snapshot: SelectionSnapshot, column: number): CellKind[] {
   return snapshot.values.slice(1)
     .map((row, rowOffset) =>
-      tableCellKind(row[column], snapshot.texts[rowOffset + 1][column], snapshot.numberFormats[rowOffset + 1][column]))
+      getCellKind(row[column], snapshot.texts[rowOffset + 1][column], snapshot.numberFormats[rowOffset + 1][column]))
     .filter((kind) => kind !== "blank");
-}
-
-function tableCellKind(value: unknown, text: string, numberFormat: string): CellKind {
-  const kind = getCellKind(value, text, numberFormat);
-  return kind === "number" && /[dmyhs]/i.test(numberFormat) ? "date" : kind;
 }

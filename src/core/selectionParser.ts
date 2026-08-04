@@ -206,7 +206,41 @@ function isBlank(value: unknown, text: string): boolean {
 }
 
 function isDateFormat(numberFormat: string): boolean {
-  return /(?:^|[^a-z])(d|m|y|h|s)(?:[^a-z]|$)/i.test(numberFormat);
+  const formatWithoutLiterals = stripFormatLiterals(numberFormat);
+  return /(?:^|[^a-z])[dmyhs]+(?=$|[^a-z])/i.test(formatWithoutLiterals);
+}
+
+function stripFormatLiterals(numberFormat: string): string {
+  let result = "";
+  let index = 0;
+
+  while (index < numberFormat.length) {
+    const character = numberFormat[index];
+    if (character === "\\") {
+      index += 2;
+      continue;
+    }
+    if (character === "\"") {
+      index += 1;
+      while (index < numberFormat.length) {
+        if (numberFormat[index] !== "\"") {
+          index += 1;
+          continue;
+        }
+        if (numberFormat[index + 1] === "\"") {
+          index += 2;
+          continue;
+        }
+        index += 1;
+        break;
+      }
+      continue;
+    }
+    result += character;
+    index += 1;
+  }
+
+  return result;
 }
 
 function displayText(text: string): string {

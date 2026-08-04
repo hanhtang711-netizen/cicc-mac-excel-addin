@@ -86,4 +86,21 @@ describe("table plans", () => {
       { rowOffset: 1, fill: "#F5F5F5" },
     ]);
   });
+
+  it("keeps a USD-formatted numeric column right-aligned", () => {
+    const plan = buildStandardTablePlan({
+      ...selectionSnapshot,
+      columnCount: 2,
+      values: [["Date", "Revenue"], [46023, 10], [46030, 12]],
+      texts: [["Date", "Revenue"], ["2026-01-01", "10.0"], ["2026-01-08", "12.0"]],
+      numberFormats: [
+        ["General", "General"],
+        ["yyyy-mm-dd", "\"USD\" #,##0.0"],
+        ["yyyy-mm-dd", "\"USD\" #,##0.0"],
+      ],
+      rowCount: 3,
+    });
+
+    expect(plan.columnAlignments).toEqual(["center", "right"]);
+  });
 });
