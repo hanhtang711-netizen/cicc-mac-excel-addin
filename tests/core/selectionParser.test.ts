@@ -35,6 +35,11 @@ describe("parseSelection", () => {
       "'Data'!$B$2:$B$4",
       "'Data'!$C$2:$C$4",
     ]);
+    expect(parsed.categoryKinds).toEqual(["number", "number", "number"]);
+    expect(parsed.series.map((series) => series.valueKinds)).toEqual([
+      ["number", "number", "number"],
+      ["number", "number", "number"],
+    ]);
   });
 
   it("treats a single-cell text row as a title and the next row as headers", () => {

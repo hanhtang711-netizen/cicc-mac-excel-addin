@@ -12,7 +12,7 @@ export type ChartKind =
   | "columnStacked100"
   | "lineStacked";
 
-export type ChartSizePreset = "small" | "medium" | "large";
+export type ChartSizePreset = "small" | "medium" | "large" | "custom";
 
 export type LegendPosition = "bottom" | "top" | "left" | "right" | "none";
 
@@ -34,6 +34,7 @@ export interface ParsedSeries {
   name: string;
   valuesAddress: string;
   valueColumnOffset: number;
+  valueKinds: CellKind[];
 }
 
 export interface ParsedSelection {
@@ -43,6 +44,7 @@ export interface ParsedSelection {
   headerRows: number;
   categoryColumnOffset: number;
   categoryAddress: string;
+  categoryKinds: CellKind[];
   orientation: SeriesOrientation;
   series: ParsedSeries[];
   numberFormats: string[][];
@@ -71,6 +73,9 @@ export interface ChartPlan {
   sourceAddress: string;
   orientation: SeriesOrientation;
   series: ChartSeriesPlan[];
+  sizePreset: ChartSizePreset;
+  widthCm?: number;
+  heightCm?: number;
   title?: string;
   showDataLabels: boolean;
   addLinearTrendline: boolean;

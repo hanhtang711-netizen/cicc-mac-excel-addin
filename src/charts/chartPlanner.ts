@@ -25,6 +25,9 @@ export function buildChartPlan(
       categoryAddress: parsed.categoryAddress,
       valuesAddress: series.valuesAddress,
     })),
+    sizePreset: options.sizePreset ?? "medium",
+    ...(options.widthCm === undefined ? {} : { widthCm: options.widthCm }),
+    ...(options.heightCm === undefined ? {} : { heightCm: options.heightCm }),
     ...(options.title ?? parsed.title ? { title: options.title ?? parsed.title } : {}),
     showDataLabels: options.showDataLabels ?? false,
     addLinearTrendline: kind === "scatterTrend" && options.addTrendline !== false,
@@ -32,55 +35,19 @@ export function buildChartPlan(
 }
 
 function assertScatterData(parsed: ParsedSelection): void {
-  if (!isNumericOrDateFormat(categoryFormat(parsed))) {
+  const validX = parsed.categoryKinds.length > 0 &&
+    parsed.categoryKinds.every((kind) => kind === "number" || kind === "date" || kind === "blank") &&
+    parsed.categoryKinds.some((kind) => kind === "number" || kind === "date");
+  if (!validX) {
     throw new AddinError("scatter_requires_numeric_x");
   }
 
-  const hasNumericY = parsed.series.some((series, seriesIndex) =>
-    isNumericFormat(seriesFormat(parsed, series.valueColumnOffset, seriesIndex)),
-  );
-  if (!hasNumericY) {
+  const validY = parsed.series.length > 0 &&
+    parsed.series.every((series) =>
+      series.valueKinds.every((kind) => kind === "number" || kind === "blank"),
+    ) &&
+    parsed.series.some((series) => series.valueKinds.some((kind) => kind === "number"));
+  if (!validY) {
     throw new AddinError("scatter_requires_numeric_x");
   }
-}
-
-function categoryFormat(parsed: ParsedSelection): string | undefined {
-  if (parsed.orientation === "columns") {
-    return parsed.numberFormats[parsed.headerRows]?.[parsed.categoryColumnOffset];
-  }
-
-  const categoryRow = parsed.headerRows === 0 ? 0 : parsed.headerRows - 1;
-  return parsed.numberFormats[categoryRow]?.[1];
-}
-
-function seriesFormat(
-  parsed: ParsedSelection,
-  valueColumnOffset: number,
-  seriesIndex: number,
-): string | undefined {
-  if (parsed.orientation === "columns") {
-    return parsed.numberFormats[parsed.headerRows]?.[valueColumnOffset];
-  }
-
-  return parsed.numberFormats[parsed.headerRows + seriesIndex]?.[valueColumnOffset];
-}
-
-function isNumericOrDateFormat(format: string | undefined): boolean {
-  return !isTextFormat(format);
-}
-
-function isNumericFormat(format: string | undefined): boolean {
-  return !isTextFormat(format) && !isDateFormat(format);
-}
-
-function isTextFormat(format: string | undefined): boolean {
-  return format === undefined || /(^|[^\\])@|text/i.test(format);
-}
-
-function isDateFormat(format: string | undefined): boolean {
-  if (format === undefined) {
-    return false;
-  }
-  const withoutQuotedText = format.replace(/"[^"]*"/g, "").replace(/\[[^\]]*\]/g, "");
-  return /y{1,4}|d{1,4}|h{1,2}|s{1,2}|m{1,4}/i.test(withoutQuotedText);
 }

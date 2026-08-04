@@ -57,6 +57,7 @@ function parseColumns(
       name: hasHeader ? displayText(snapshot.texts[headerRows - 1][offset]) : `Series ${offset}`,
       valuesAddress: rangeAddress(snapshot.worksheetName, dataStartRow, column, dataEndRow, column),
       valueColumnOffset: offset,
+      valueKinds: columnKinds(snapshot, headerRows, offset),
     });
   }
 
@@ -67,6 +68,7 @@ function parseColumns(
     headerRows,
     categoryColumnOffset: 0,
     categoryAddress: rangeAddress(snapshot.worksheetName, dataStartRow, categoryColumn, dataEndRow, categoryColumn),
+    categoryKinds: columnKinds(snapshot, headerRows, 0),
     orientation: "columns",
     series,
     numberFormats: snapshot.numberFormats,
@@ -81,7 +83,8 @@ function parseRows(
 ): ParsedSelection {
   const firstDataRow = snapshot.rowIndex + headerRows;
   const endColumn = snapshot.columnIndex + snapshot.columnCount - 1;
-  const categoryRow = snapshot.rowIndex + (hasHeader ? headerRows - 1 : 0);
+  const categoryRowOffset = hasHeader ? headerRows - 1 : 0;
+  const categoryRow = snapshot.rowIndex + categoryRowOffset;
   const series: ParsedSeries[] = [];
 
   for (let offset = headerRows; offset < snapshot.rowCount; offset += 1) {
@@ -90,6 +93,7 @@ function parseRows(
       name: displayText(snapshot.texts[offset][0]) || `Series ${offset - headerRows + 1}`,
       valuesAddress: rangeAddress(snapshot.worksheetName, row, snapshot.columnIndex + 1, row, endColumn),
       valueColumnOffset: 1,
+      valueKinds: rowKinds(snapshot, offset, 1),
     });
   }
 
@@ -110,6 +114,7 @@ function parseRows(
       categoryRow,
       endColumn,
     ),
+    categoryKinds: rowKinds(snapshot, categoryRowOffset, 1),
     orientation: "rows",
     series,
     numberFormats: snapshot.numberFormats,
@@ -182,6 +187,18 @@ export function getCellKind(value: unknown, text: string, numberFormat: string):
     return "number";
   }
   return "text";
+}
+
+function columnKinds(snapshot: SelectionSnapshot, startRow: number, column: number): CellKind[] {
+  return snapshot.values.slice(startRow).map((row, index) =>
+    getCellKind(row[column], snapshot.texts[startRow + index][column], snapshot.numberFormats[startRow + index][column]),
+  );
+}
+
+function rowKinds(snapshot: SelectionSnapshot, row: number, startColumn: number): CellKind[] {
+  return snapshot.values[row].slice(startColumn).map((value, index) =>
+    getCellKind(value, snapshot.texts[row][startColumn + index], snapshot.numberFormats[row][startColumn + index]),
+  );
 }
 
 function isBlank(value: unknown, text: string): boolean {

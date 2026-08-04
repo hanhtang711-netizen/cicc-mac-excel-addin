@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { CHART_CATALOG } from "../../src/charts/chartCatalog";
 import { buildChartPlan } from "../../src/charts/chartPlanner";
+import { parseSelection } from "../../src/core/selectionParser";
 import type { ParsedSelection } from "../../src/core/types";
 
 const parsedSelection: ParsedSelection = {
@@ -10,10 +11,21 @@ const parsedSelection: ParsedSelection = {
   headerRows: 1,
   categoryColumnOffset: 0,
   categoryAddress: "'Data'!$A$2:$A$4",
+  categoryKinds: ["date", "date", "date"],
   orientation: "columns",
   series: [
-    { name: "Pulp", valuesAddress: "'Data'!$B$2:$B$4", valueColumnOffset: 1 },
-    { name: "Paper", valuesAddress: "'Data'!$C$2:$C$4", valueColumnOffset: 2 },
+    {
+      name: "Pulp",
+      valuesAddress: "'Data'!$B$2:$B$4",
+      valueColumnOffset: 1,
+      valueKinds: ["number", "number", "number"],
+    },
+    {
+      name: "Paper",
+      valuesAddress: "'Data'!$C$2:$C$4",
+      valueColumnOffset: 2,
+      valueKinds: ["number", "number", "number"],
+    },
   ],
   numberFormats: [
     ["General", "General", "General"],
@@ -65,9 +77,7 @@ describe("buildChartPlan", () => {
   it("rejects a scatter selection whose X values are text", () => {
     const textCategories = {
       ...parsedSelection,
-      numberFormats: parsedSelection.numberFormats.map((row, rowIndex) =>
-        rowIndex === 0 ? row : ["@", ...row.slice(1)],
-      ),
+      categoryKinds: ["text", "text", "text"] satisfies ParsedSelection["categoryKinds"],
     };
 
     expect(() => buildChartPlan(textCategories, "scatterTrend", {})).toThrow(
@@ -78,9 +88,10 @@ describe("buildChartPlan", () => {
   it("rejects a scatter selection without a numeric Y series", () => {
     const textValues = {
       ...parsedSelection,
-      numberFormats: parsedSelection.numberFormats.map((row, rowIndex) =>
-        rowIndex === 0 ? row : [row[0], "@", "@"],
-      ),
+      series: parsedSelection.series.map((series) => ({
+        ...series,
+        valueKinds: ["text", "text", "text"] satisfies ParsedSelection["series"][number]["valueKinds"],
+      })),
     };
 
     expect(() => buildChartPlan(textValues, "scatterTrend", {})).toThrow(
@@ -106,5 +117,65 @@ describe("buildChartPlan", () => {
 
   it("does not add a trendline to non-scatter charts", () => {
     expect(buildChartPlan(parsedSelection, "column", { addTrendline: true }).addLinearTrendline).toBe(false);
+  });
+
+  it("rejects General-formatted text X values", () => {
+    const generalTextX = parseSelection({
+      worksheetName: "Data",
+      address: "Data!A1:B3",
+      rowIndex: 0,
+      columnIndex: 0,
+      rowCount: 3,
+      columnCount: 2,
+      values: [["X", "Y"], ["alpha", 1], ["beta", 2]],
+      texts: [["X", "Y"], ["alpha", "1"], ["beta", "2"]],
+      numberFormats: [["General", "General"], ["General", "General"], ["General", "General"]],
+    });
+
+    expect(() => buildChartPlan(generalTextX, "scatterTrend", {})).toThrow("scatter_requires_numeric_x");
+  });
+
+  it("rejects a scatter X range with a later text cell", () => {
+    const mixedX = parseSelection({
+      worksheetName: "Data",
+      address: "Data!A1:B3",
+      rowIndex: 0,
+      columnIndex: 0,
+      rowCount: 3,
+      columnCount: 2,
+      values: [["X", "Y"], [1, 1], ["later text", 2]],
+      texts: [["X", "Y"], ["1", "1"], ["later text", "2"]],
+      numberFormats: [["General", "General"], ["General", "General"], ["General", "General"]],
+    });
+
+    expect(() => buildChartPlan(mixedX, "scatterTrend", {})).toThrow("scatter_requires_numeric_x");
+  });
+
+  it("rejects a scatter Y range with a later error cell", () => {
+    const mixedY = parseSelection({
+      worksheetName: "Data",
+      address: "Data!A1:B3",
+      rowIndex: 0,
+      columnIndex: 0,
+      rowCount: 3,
+      columnCount: 2,
+      values: [["X", "Y"], [1, 1], [2, "#N/A"]],
+      texts: [["X", "Y"], ["1", "1"], ["2", "#N/A"]],
+      numberFormats: [["General", "General"], ["General", "General"], ["General", "General"]],
+    });
+
+    expect(() => buildChartPlan(mixedY, "scatterTrend", {})).toThrow("scatter_requires_numeric_x");
+  });
+
+  it("carries custom dimensions into the chart plan", () => {
+    const plan = buildChartPlan(parsedSelection, "column", {
+      sizePreset: "custom",
+      widthCm: 14,
+      heightCm: 8,
+    });
+
+    expect(plan.sizePreset).toBe("custom");
+    expect(plan.widthCm).toBe(14);
+    expect(plan.heightCm).toBe(8);
   });
 });
