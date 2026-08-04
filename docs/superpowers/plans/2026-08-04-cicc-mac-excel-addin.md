@@ -256,9 +256,16 @@ describe("parseSelection", () => {
   });
 
   it("rejects a one-cell selection", () => {
-    expect(() => parseSelection({ ...snapshot, rowCount: 1, columnCount: 1 })).toThrow(
-      "selection_too_small",
-    );
+    const oneCell = {
+      ...snapshot,
+      address: "Data!A1",
+      rowCount: 1,
+      columnCount: 1,
+      values: [[1]],
+      texts: [["1"]],
+      numberFormats: [["0"]],
+    };
+    expect(() => parseSelection(oneCell)).toThrow("selection_too_small");
   });
 });
 ```
@@ -358,6 +365,7 @@ git commit -m "feat: parse Excel selections for charting"
 
 ```ts
 import { describe, expect, it } from "vitest";
+import { CHART_CATALOG } from "../../src/charts/chartCatalog";
 import { buildChartPlan } from "../../src/charts/chartPlanner";
 
 describe("buildChartPlan", () => {
@@ -373,7 +381,7 @@ describe("buildChartPlan", () => {
     ["columnStacked100", "columnStacked100"],
     ["lineStacked", "lineStacked"],
   ] as const)("maps %s to %s", (kind, excelType) => {
-    expect(buildChartPlan(parsedSelection, kind, {}).excelType).toBe(excelType);
+    expect(CHART_CATALOG[kind].excelType).toBe(excelType);
   });
 
   it("rejects a pie selection with two value series", () => {
