@@ -1,5 +1,12 @@
 import { AddinError } from "../core/errors";
-import type { ChartPlan, ChartStylePlan, SelectionSnapshot } from "../core/types";
+import type {
+  ChartPlan,
+  ChartStylePlan,
+  StandardTableFormatPlan,
+  SelectionSnapshot,
+  TableFormatPlan,
+  TableHorizontalAlignment,
+} from "../core/types";
 import { CICC_SERIES_COLORS } from "../charts/chartStyle";
 
 export class ExcelGateway {
@@ -69,6 +76,22 @@ export class ExcelGateway {
       }
     });
   }
+
+  async applyTablePlan(plan: TableFormatPlan): Promise<void> {
+    await Excel.run(async (context) => {
+      const worksheet = context.workbook.worksheets.getItem(plan.worksheetName);
+      const range = worksheet.getRange(localAddress(plan.address));
+
+      if (plan.kind === "zebra") {
+        applyZebraFills(range, plan);
+        await context.sync();
+        return;
+      }
+
+      applyStandardFormats(range, plan);
+      await autofitWithinBounds(context, range, plan);
+    });
+  }
 }
 
 function snapshotFromRange(sheetName: string, range: Excel.Range): SelectionSnapshot {
@@ -121,6 +144,80 @@ function addScatterSeries(
 function localAddress(address: string): string {
   const separator = address.lastIndexOf("!");
   return separator < 0 ? address : address.slice(separator + 1);
+}
+
+function applyZebraFills(range: Excel.Range, plan: Extract<TableFormatPlan, { kind: "zebra" }>): void {
+  plan.rowFills.forEach((rowFill) => {
+    range.getRow(rowFill.rowOffset).format.fill.color = rowFill.fill;
+  });
+}
+
+function applyStandardFormats(range: Excel.Range, plan: StandardTableFormatPlan): void {
+  range.format.fill.color = plan.body.fill;
+  range.format.font.color = plan.body.fontColor;
+  range.format.font.bold = plan.body.bold;
+  range.format.font.size = plan.body.fontSize;
+
+  plan.columnAlignments.forEach((alignment, column) => {
+    range.getColumn(column).format.horizontalAlignment = excelAlignment(alignment);
+  });
+  applyBorders(range, plan);
+
+  const header = range.getRow(0);
+  header.format.fill.color = plan.header.fill;
+  header.format.font.color = plan.header.fontColor;
+  header.format.font.bold = plan.header.bold;
+  header.format.font.size = plan.header.fontSize;
+  header.format.horizontalAlignment = excelAlignment(plan.header.horizontalAlignment);
+}
+
+function excelAlignment(alignment: TableHorizontalAlignment): "Left" | "Center" | "Right" {
+  switch (alignment) {
+    case "left": return "Left";
+    case "center": return "Center";
+    case "right": return "Right";
+  }
+}
+
+function applyBorders(range: Excel.Range, plan: StandardTableFormatPlan): void {
+  const borderIndexes = ["EdgeTop", "EdgeBottom", "EdgeLeft", "EdgeRight", "InsideVertical", "InsideHorizontal"] as const;
+  borderIndexes.forEach((index) => {
+    const border = range.format.borders.getItem(index);
+    border.color = plan.border.color;
+    border.style = "Continuous";
+    border.weight = "Thin";
+  });
+}
+
+async function autofitWithinBounds(
+  context: Excel.RequestContext,
+  range: Excel.Range,
+  plan: StandardTableFormatPlan,
+): Promise<void> {
+  const columns = Array.from({ length: plan.columnCount }, (_, index) => range.getColumn(index).format);
+  const rows = Array.from({ length: plan.rowCount }, (_, index) => range.getRow(index).format);
+
+  columns.forEach((format) => {
+    format.autofitColumns();
+    format.load("columnWidth");
+  });
+  rows.forEach((format) => {
+    format.autofitRows();
+    format.load("rowHeight");
+  });
+  await context.sync();
+
+  columns.forEach((format) => {
+    if (format.columnWidth > 180) {
+      format.columnWidth = 180;
+    }
+  });
+  rows.forEach((format) => {
+    if (format.rowHeight > 45) {
+      format.rowHeight = 45;
+    }
+  });
+  await context.sync();
 }
 
 function applySeriesColors(series: readonly Excel.ChartSeries[], colors: readonly string[]): void {

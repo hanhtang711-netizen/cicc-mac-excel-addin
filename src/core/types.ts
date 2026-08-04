@@ -113,6 +113,56 @@ export interface ChartStylePlan {
   placement: ChartPlacementPlan;
 }
 
+export type TablePreservedProperty =
+  | "values"
+  | "formulas"
+  | "numberFormats"
+  | "merges"
+  | "conditionalFormats"
+  | "fonts"
+  | "borders"
+  | "alignment";
+
+export type TableHorizontalAlignment = "left" | "center" | "right";
+
+export interface TableCellFormat {
+  fill: string;
+  fontColor: string;
+  bold: boolean;
+  fontSize: number;
+}
+
+export interface TableBorderFormat {
+  color: string;
+  style: "continuous";
+  weight: "thin";
+}
+
+interface TablePlanBase {
+  worksheetName: string;
+  address: string;
+  rowCount: number;
+  columnCount: number;
+}
+
+export interface StandardTableFormatPlan extends TablePlanBase {
+  kind: "standard";
+  header: TableCellFormat & { horizontalAlignment: "center" };
+  body: TableCellFormat;
+  columnAlignments: TableHorizontalAlignment[];
+  border: TableBorderFormat;
+  rowFills: [];
+  preserve: Array<Exclude<TablePreservedProperty, "fonts" | "borders" | "alignment">>;
+}
+
+export interface ZebraTableFormatPlan extends TablePlanBase {
+  kind: "zebra";
+  rowFills: Array<{ rowOffset: number; fill: "#FFFFFF" | "#F5F5F5" }>;
+  preserve: TablePreservedProperty[];
+}
+
+export type TableFormatPlan = StandardTableFormatPlan | ZebraTableFormatPlan;
+
 export interface FeedbackPort {
   showError(error: unknown): Promise<void>;
   showWarnings(codes: string[]): Promise<void>;

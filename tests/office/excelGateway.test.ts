@@ -269,6 +269,64 @@ describe("ExcelGateway.createChart", () => {
   });
 });
 
+describe("ExcelGateway.applyTablePlan", () => {
+  it("applies zebra fills only to rows on the worksheet captured by the plan", async () => {
+    const fillWrites: Array<{ row: number; color: string }> = [];
+    const unexpectedWrite = vi.fn(() => {
+      throw new Error("zebra must not change this format");
+    });
+    const makeRow = (row: number) => ({
+      format: {
+        fill: {
+          set color(color: string) {
+            fillWrites.push({ row, color });
+          },
+        },
+        font: { set color(_value: string) { unexpectedWrite(); }, set bold(_value: boolean) { unexpectedWrite(); }, set size(_value: number) { unexpectedWrite(); } },
+        borders: { getItem: unexpectedWrite },
+        set horizontalAlignment(_value: string) { unexpectedWrite(); },
+      },
+    });
+    const selectedRange = {
+      getRow: vi.fn(makeRow),
+      format: {
+        fill: { set color(_value: string) { unexpectedWrite(); } },
+        font: { set color(_value: string) { unexpectedWrite(); }, set bold(_value: boolean) { unexpectedWrite(); }, set size(_value: number) { unexpectedWrite(); } },
+        borders: { getItem: unexpectedWrite },
+        autofitColumns: unexpectedWrite,
+        autofitRows: unexpectedWrite,
+        set horizontalAlignment(_value: string) { unexpectedWrite(); },
+      },
+    };
+    const dataWorksheet = { getRange: vi.fn(() => selectedRange) };
+    const activeWorksheet = { getRange: vi.fn(() => { throw new Error("active sheet must not be used"); }) };
+    const sync = vi.fn().mockResolvedValue(undefined);
+    const getItem = vi.fn(() => dataWorksheet);
+    stubExcel({
+      workbook: {
+        worksheets: { getItem, getActiveWorksheet: vi.fn(() => activeWorksheet) },
+      },
+      sync,
+    });
+
+    await new ExcelGateway().applyTablePlan({
+      kind: "zebra",
+      worksheetName: "Data",
+      address: "'Data'!$A$1:$C$3",
+      rowCount: 3,
+      columnCount: 3,
+      rowFills: [{ rowOffset: 1, fill: "#FFFFFF" }, { rowOffset: 2, fill: "#F5F5F5" }],
+      preserve: ["values", "formulas", "numberFormats", "merges", "conditionalFormats", "fonts", "borders", "alignment"],
+    });
+
+    expect(getItem).toHaveBeenCalledWith("Data");
+    expect(dataWorksheet.getRange).toHaveBeenCalledWith("$A$1:$C$3");
+    expect(fillWrites).toEqual([{ row: 1, color: "#FFFFFF" }, { row: 2, color: "#F5F5F5" }]);
+    expect(unexpectedWrite).not.toHaveBeenCalled();
+    expect(sync).toHaveBeenCalledOnce();
+  });
+});
+
 function stubExcel(context: object): void {
   vi.stubGlobal("Excel", {
     run: vi.fn(async (callback: (value: object) => Promise<unknown>) => callback(context)),
