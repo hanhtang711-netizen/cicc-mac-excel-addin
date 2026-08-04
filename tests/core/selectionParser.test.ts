@@ -76,4 +76,51 @@ describe("parseSelection", () => {
   it("quotes sheet names and doubles embedded apostrophes", () => {
     expect(quoteSheetName("O'Brien Data")).toBe("'O''Brien Data'");
   });
+
+  it("keeps the first row of a numeric selection when no header is present", () => {
+    const numericSelection = {
+      ...snapshot,
+      rowCount: 3,
+      columnCount: 2,
+      values: [[1, 10], [2, 11], [3, 12]],
+      texts: [["1", "10"], ["2", "11"], ["3", "12"]],
+      numberFormats: [["0", "0"], ["0", "0"], ["0", "0"]],
+    };
+
+    const parsed = parseSelection(numericSelection, "columns");
+
+    expect(parsed.headerRows).toBe(0);
+    expect(parsed.title).toBeUndefined();
+    expect(parsed.categoryAddress).toBe("'Data'!$A$1:$A$3");
+    expect(parsed.series[0].valuesAddress).toBe("'Data'!$B$1:$B$3");
+  });
+
+  it("does not treat a numeric or date display text as a title", () => {
+    const numericAndDate = {
+      ...snapshot,
+      rowCount: 2,
+      columnCount: 2,
+      values: [[45292, null], [45299, 10]],
+      texts: [["2024-01-01", ""], ["2024-01-08", "10"]],
+      numberFormats: [["yyyy-mm-dd", "General"], ["yyyy-mm-dd", "0"]],
+    };
+
+    const parsed = parseSelection(numericAndDate, "columns");
+
+    expect(parsed.title).toBeUndefined();
+    expect(parsed.headerRows).toBe(0);
+  });
+
+  it("rejects a title and header selection that has no data rows", () => {
+    const titleAndHeaderOnly = {
+      ...snapshot,
+      rowCount: 2,
+      columnCount: 2,
+      values: [["Weekly prices", null], ["Date", "Pulp"]],
+      texts: [["Weekly prices", ""], ["Date", "Pulp"]],
+      numberFormats: [["General", "General"], ["General", "General"]],
+    };
+
+    expect(() => parseSelection(titleAndHeaderOnly, "columns")).toThrow("unsupported_layout");
+  });
 });

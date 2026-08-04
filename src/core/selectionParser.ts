@@ -47,6 +47,10 @@ function parseColumns(
   const categoryColumn = snapshot.columnIndex;
   const series: ParsedSeries[] = [];
 
+  if (dataStartRow > dataEndRow) {
+    throw new AddinError("unsupported_layout");
+  }
+
   for (let offset = 1; offset < snapshot.columnCount; offset += 1) {
     const column = snapshot.columnIndex + offset;
     series.push({
@@ -126,17 +130,33 @@ function assertRectangular(snapshot: SelectionSnapshot): void {
 }
 
 function titleInFirstRow(snapshot: SelectionSnapshot): string | undefined {
-  const nonEmpty = snapshot.texts[0].map(displayText).filter((text) => text.length > 0);
-  return nonEmpty.length === 1 ? nonEmpty[0] : undefined;
+  const kinds = snapshot.values[0].map((value, column) =>
+    getCellKind(value, snapshot.texts[0][column], snapshot.numberFormats[0][column]),
+  );
+  const textColumns = kinds
+    .map((kind, column) => (kind === "text" ? column : -1))
+    .filter((column) => column >= 0);
+
+  if (textColumns.length !== 1 || kinds.some((kind) => kind !== "text" && kind !== "blank")) {
+    return undefined;
+  }
+  return displayText(snapshot.texts[0][textColumns[0]]);
 }
 
 function isHeaderRow(snapshot: SelectionSnapshot, row: number): boolean {
-  if (row >= snapshot.rowCount - 1) {
+  if (row >= snapshot.rowCount) {
     return false;
   }
 
-  const headerCells = snapshot.texts[row];
-  const textCount = headerCells.filter((text) => displayText(text).length > 0).length;
+  const headerKinds = snapshot.values[row].map((value, column) =>
+    getCellKind(value, snapshot.texts[row][column], snapshot.numberFormats[row][column]),
+  );
+  const textCount = headerKinds.filter((kind) => kind === "text").length;
+  const hasTextMajority = textCount > headerKinds.length / 2;
+  if (row === snapshot.rowCount - 1) {
+    return hasTextMajority;
+  }
+
   const dataCells = snapshot.values.slice(row + 1).flat();
   const dataKinds = dataCells.map((value, index) => {
     const dataRow = row + 1 + Math.floor(index / snapshot.columnCount);
@@ -145,7 +165,7 @@ function isHeaderRow(snapshot: SelectionSnapshot, row: number): boolean {
   });
   const numericOrDateCount = dataKinds.filter((kind) => kind === "number" || kind === "date").length;
 
-  return textCount > headerCells.length / 2 && numericOrDateCount > dataKinds.length / 2;
+  return hasTextMajority && numericOrDateCount > dataKinds.length / 2;
 }
 
 export function getCellKind(value: unknown, text: string, numberFormat: string): CellKind {
