@@ -1,0 +1,25 @@
+:root {
+  color: #222222;
+  background: #ffffff;
+  font-family: Arial, "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+
+body {
+  margin: 0;
+}
+
+main {
+  padding: 16px;
+}
+
+h1 {
+  margin: 0 0 8px;
+  color: #b8975a;
+  font-size: 18px;
+}
+
+p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+}

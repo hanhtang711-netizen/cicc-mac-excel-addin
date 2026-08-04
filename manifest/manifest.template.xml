@@ -43,65 +43,81 @@
               <Group id="CiccCharts.Group">
                 <Label resid="CiccCharts.Group.Label" />
                 <Icon><bt:Image size="16" resid="Icon.16" /><bt:Image size="32" resid="Icon.32" /><bt:Image size="80" resid="Icon.80" /></Icon>
-                <Control xsi:type="Button" id="CreateColumnChart">
-                  <Label resid="Chart.Column.Lbl" />
-                  <Supertip><Title resid="Chart.Column.Lbl" /><Description resid="Chart.Column.Desc" /></Supertip>
+                <Control xsi:type="Menu" id="CreateChartMenu">
+                  <Label resid="Chart.Menu.Lbl" />
+                  <Supertip><Title resid="Chart.Menu.Lbl" /><Description resid="Chart.Menu.Desc" /></Supertip>
                   <Icon><bt:Image size="16" resid="Icon.16" /><bt:Image size="32" resid="Icon.32" /><bt:Image size="80" resid="Icon.80" /></Icon>
-                  <Action xsi:type="ExecuteFunction"><FunctionName>createColumnChart</FunctionName></Action>
+                  <Items>
+                    <Item id="CreateColumnChart">
+                      <Label resid="Chart.Column.Lbl" />
+                      <Supertip><Title resid="Chart.Column.Lbl" /><Description resid="Chart.Column.Desc" /></Supertip>
+                      <Icon><bt:Image size="16" resid="Icon.16" /><bt:Image size="32" resid="Icon.32" /><bt:Image size="80" resid="Icon.80" /></Icon>
+                      <Action xsi:type="ExecuteFunction"><FunctionName>createColumnChart</FunctionName></Action>
+                    </Item>
+                    <Item id="CreateStackedColumnChart">
+                      <Label resid="Chart.StackCol.Lbl" />
+                      <Supertip><Title resid="Chart.StackCol.Lbl" /><Description resid="Chart.StackCol.Desc" /></Supertip>
+                      <Icon><bt:Image size="16" resid="Icon.16" /><bt:Image size="32" resid="Icon.32" /><bt:Image size="80" resid="Icon.80" /></Icon>
+                      <Action xsi:type="ExecuteFunction"><FunctionName>createStackedColumnChart</FunctionName></Action>
+                    </Item>
+                    <Item id="CreateLineChart">
+                      <Label resid="Chart.Line.Lbl" />
+                      <Supertip><Title resid="Chart.Line.Lbl" /><Description resid="Chart.Line.Desc" /></Supertip>
+                      <Icon><bt:Image size="16" resid="Icon.16" /><bt:Image size="32" resid="Icon.32" /><bt:Image size="80" resid="Icon.80" /></Icon>
+                      <Action xsi:type="ExecuteFunction"><FunctionName>createLineChart</FunctionName></Action>
+                    </Item>
+                    <Item id="CreateMarkedLineChart">
+                      <Label resid="Chart.LineMark.Lbl" />
+                      <Supertip><Title resid="Chart.LineMark.Lbl" /><Description resid="Chart.LineMark.Desc" /></Supertip>
+                      <Icon><bt:Image size="16" resid="Icon.16" /><bt:Image size="32" resid="Icon.32" /><bt:Image size="80" resid="Icon.80" /></Icon>
+                      <Action xsi:type="ExecuteFunction"><FunctionName>createMarkedLineChart</FunctionName></Action>
+                    </Item>
+                    <Item id="CreatePieChart">
+                      <Label resid="Chart.Pie.Lbl" />
+                      <Supertip><Title resid="Chart.Pie.Lbl" /><Description resid="Chart.Pie.Desc" /></Supertip>
+                      <Icon><bt:Image size="16" resid="Icon.16" /><bt:Image size="32" resid="Icon.32" /><bt:Image size="80" resid="Icon.80" /></Icon>
+                      <Action xsi:type="ExecuteFunction"><FunctionName>createPieChart</FunctionName></Action>
+                    </Item>
+                    <Item id="CreateBarChart">
+                      <Label resid="Chart.Bar.Lbl" />
+                      <Supertip><Title resid="Chart.Bar.Lbl" /><Description resid="Chart.Bar.Desc" /></Supertip>
+                      <Icon><bt:Image size="16" resid="Icon.16" /><bt:Image size="32" resid="Icon.32" /><bt:Image size="80" resid="Icon.80" /></Icon>
+                      <Action xsi:type="ExecuteFunction"><FunctionName>createBarChart</FunctionName></Action>
+                    </Item>
+                    <Item id="CreateScatterTrendChart">
+                      <Label resid="Chart.Scatter.Lbl" />
+                      <Supertip><Title resid="Chart.Scatter.Lbl" /><Description resid="Chart.Scatter.Desc" /></Supertip>
+                      <Icon><bt:Image size="16" resid="Icon.16" /><bt:Image size="32" resid="Icon.32" /><bt:Image size="80" resid="Icon.80" /></Icon>
+                      <Action xsi:type="ExecuteFunction"><FunctionName>createScatterTrendChart</FunctionName></Action>
+                    </Item>
+                    <Item id="CreateExplodedPieChart">
+                      <Label resid="Chart.PieExp.Lbl" />
+                      <Supertip><Title resid="Chart.PieExp.Lbl" /><Description resid="Chart.PieExp.Desc" /></Supertip>
+                      <Icon><bt:Image size="16" resid="Icon.16" /><bt:Image size="32" resid="Icon.32" /><bt:Image size="80" resid="Icon.80" /></Icon>
+                      <Action xsi:type="ExecuteFunction"><FunctionName>createExplodedPieChart</FunctionName></Action>
+                    </Item>
+                    <Item id="CreatePercentageStackedChart">
+                      <Label resid="Chart.StackPct.Lbl" />
+                      <Supertip><Title resid="Chart.StackPct.Lbl" /><Description resid="Chart.StackPct.Desc" /></Supertip>
+                      <Icon><bt:Image size="16" resid="Icon.16" /><bt:Image size="32" resid="Icon.32" /><bt:Image size="80" resid="Icon.80" /></Icon>
+                      <Action xsi:type="ExecuteFunction"><FunctionName>createPercentageStackedChart</FunctionName></Action>
+                    </Item>
+                    <Item id="CreateStackedLineChart">
+                      <Label resid="Chart.StackLine.Lbl" />
+                      <Supertip><Title resid="Chart.StackLine.Lbl" /><Description resid="Chart.StackLine.Desc" /></Supertip>
+                      <Icon><bt:Image size="16" resid="Icon.16" /><bt:Image size="32" resid="Icon.32" /><bt:Image size="80" resid="Icon.80" /></Icon>
+                      <Action xsi:type="ExecuteFunction"><FunctionName>createStackedLineChart</FunctionName></Action>
+                    </Item>
+                  </Items>
                 </Control>
-                <Control xsi:type="Button" id="CreateStackedColumnChart">
-                  <Label resid="Chart.StackCol.Lbl" />
-                  <Supertip><Title resid="Chart.StackCol.Lbl" /><Description resid="Chart.StackCol.Desc" /></Supertip>
+                <Control xsi:type="Button" id="OpenAdvancedChartPane">
+                  <Label resid="Chart.Advanced.Lbl" />
+                  <Supertip><Title resid="Chart.Advanced.Lbl" /><Description resid="Chart.Advanced.Desc" /></Supertip>
                   <Icon><bt:Image size="16" resid="Icon.16" /><bt:Image size="32" resid="Icon.32" /><bt:Image size="80" resid="Icon.80" /></Icon>
-                  <Action xsi:type="ExecuteFunction"><FunctionName>createStackedColumnChart</FunctionName></Action>
-                </Control>
-                <Control xsi:type="Button" id="CreateLineChart">
-                  <Label resid="Chart.Line.Lbl" />
-                  <Supertip><Title resid="Chart.Line.Lbl" /><Description resid="Chart.Line.Desc" /></Supertip>
-                  <Icon><bt:Image size="16" resid="Icon.16" /><bt:Image size="32" resid="Icon.32" /><bt:Image size="80" resid="Icon.80" /></Icon>
-                  <Action xsi:type="ExecuteFunction"><FunctionName>createLineChart</FunctionName></Action>
-                </Control>
-                <Control xsi:type="Button" id="CreateMarkedLineChart">
-                  <Label resid="Chart.LineMark.Lbl" />
-                  <Supertip><Title resid="Chart.LineMark.Lbl" /><Description resid="Chart.LineMark.Desc" /></Supertip>
-                  <Icon><bt:Image size="16" resid="Icon.16" /><bt:Image size="32" resid="Icon.32" /><bt:Image size="80" resid="Icon.80" /></Icon>
-                  <Action xsi:type="ExecuteFunction"><FunctionName>createMarkedLineChart</FunctionName></Action>
-                </Control>
-                <Control xsi:type="Button" id="CreatePieChart">
-                  <Label resid="Chart.Pie.Lbl" />
-                  <Supertip><Title resid="Chart.Pie.Lbl" /><Description resid="Chart.Pie.Desc" /></Supertip>
-                  <Icon><bt:Image size="16" resid="Icon.16" /><bt:Image size="32" resid="Icon.32" /><bt:Image size="80" resid="Icon.80" /></Icon>
-                  <Action xsi:type="ExecuteFunction"><FunctionName>createPieChart</FunctionName></Action>
-                </Control>
-                <Control xsi:type="Button" id="CreateBarChart">
-                  <Label resid="Chart.Bar.Lbl" />
-                  <Supertip><Title resid="Chart.Bar.Lbl" /><Description resid="Chart.Bar.Desc" /></Supertip>
-                  <Icon><bt:Image size="16" resid="Icon.16" /><bt:Image size="32" resid="Icon.32" /><bt:Image size="80" resid="Icon.80" /></Icon>
-                  <Action xsi:type="ExecuteFunction"><FunctionName>createBarChart</FunctionName></Action>
-                </Control>
-                <Control xsi:type="Button" id="CreateScatterTrendChart">
-                  <Label resid="Chart.Scatter.Lbl" />
-                  <Supertip><Title resid="Chart.Scatter.Lbl" /><Description resid="Chart.Scatter.Desc" /></Supertip>
-                  <Icon><bt:Image size="16" resid="Icon.16" /><bt:Image size="32" resid="Icon.32" /><bt:Image size="80" resid="Icon.80" /></Icon>
-                  <Action xsi:type="ExecuteFunction"><FunctionName>createScatterTrendChart</FunctionName></Action>
-                </Control>
-                <Control xsi:type="Button" id="CreateExplodedPieChart">
-                  <Label resid="Chart.PieExp.Lbl" />
-                  <Supertip><Title resid="Chart.PieExp.Lbl" /><Description resid="Chart.PieExp.Desc" /></Supertip>
-                  <Icon><bt:Image size="16" resid="Icon.16" /><bt:Image size="32" resid="Icon.32" /><bt:Image size="80" resid="Icon.80" /></Icon>
-                  <Action xsi:type="ExecuteFunction"><FunctionName>createExplodedPieChart</FunctionName></Action>
-                </Control>
-                <Control xsi:type="Button" id="CreatePercentageStackedChart">
-                  <Label resid="Chart.StackPct.Lbl" />
-                  <Supertip><Title resid="Chart.StackPct.Lbl" /><Description resid="Chart.StackPct.Desc" /></Supertip>
-                  <Icon><bt:Image size="16" resid="Icon.16" /><bt:Image size="32" resid="Icon.32" /><bt:Image size="80" resid="Icon.80" /></Icon>
-                  <Action xsi:type="ExecuteFunction"><FunctionName>createPercentageStackedChart</FunctionName></Action>
-                </Control>
-                <Control xsi:type="Button" id="CreateStackedLineChart">
-                  <Label resid="Chart.StackLine.Lbl" />
-                  <Supertip><Title resid="Chart.StackLine.Lbl" /><Description resid="Chart.StackLine.Desc" /></Supertip>
-                  <Icon><bt:Image size="16" resid="Icon.16" /><bt:Image size="32" resid="Icon.32" /><bt:Image size="80" resid="Icon.80" /></Icon>
-                  <Action xsi:type="ExecuteFunction"><FunctionName>createStackedLineChart</FunctionName></Action>
+                  <Action xsi:type="ShowTaskpane">
+                    <TaskpaneId>openAdvancedChartPane</TaskpaneId>
+                    <SourceLocation resid="Taskpane.Url" />
+                  </Action>
                 </Control>
               </Group>
               <Group id="CiccTables.Group">
@@ -141,6 +157,8 @@
         <bt:String id="CiccTools.Tab.Label" DefaultValue="中金工具" />
         <bt:String id="CiccCharts.Group.Label" DefaultValue="生成图表" />
         <bt:String id="CiccTables.Group.Label" DefaultValue="表格" />
+        <bt:String id="Chart.Menu.Lbl" DefaultValue="生成图表" />
+        <bt:String id="Chart.Advanced.Lbl" DefaultValue="高级生成" />
         <bt:String id="Chart.Column.Lbl" DefaultValue="普通柱形图" />
         <bt:String id="Chart.StackCol.Lbl" DefaultValue="堆积柱形图" />
         <bt:String id="Chart.Line.Lbl" DefaultValue="普通折线图" />
@@ -155,6 +173,8 @@
         <bt:String id="Table.Zebra.Lbl" DefaultValue="斑马纹" />
       </bt:ShortStrings>
       <bt:LongStrings>
+        <bt:String id="Chart.Menu.Desc" DefaultValue="根据当前选区选择一种图表生成。" />
+        <bt:String id="Chart.Advanced.Desc" DefaultValue="打开高级图表生成窗格。" />
         <bt:String id="Chart.Column.Desc" DefaultValue="根据当前选区创建普通柱形图。" />
         <bt:String id="Chart.StackCol.Desc" DefaultValue="根据当前选区创建堆积柱形图。" />
         <bt:String id="Chart.Line.Desc" DefaultValue="根据当前选区创建普通折线图。" />
