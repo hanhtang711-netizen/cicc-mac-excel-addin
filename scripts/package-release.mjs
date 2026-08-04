@@ -1,5 +1,7 @@
 import { execFile } from "node:child_process";
-import { cp, mkdir, mkdtemp, readFile, rename, rm, stat, writeFile } from "node:fs/promises";
+import { randomUUID } from "node:crypto";
+import { cp, mkdir, mkdtemp, readFile, realpath, rename, rm, stat, writeFile } from "node:fs/promises";
+import { isIP } from "node:net";
 import { basename, dirname, isAbsolute, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
@@ -8,7 +10,15 @@ import { renderManifest } from "./render-manifest-lib.mjs";
 const execFileAsync = promisify(execFile);
 const scriptPath = fileURLToPath(import.meta.url);
 const defaultProjectRoot = resolve(dirname(scriptPath), "..");
-const REQUIRED_STATIC_ENTRIES = ["taskpane.html", "commands.html", "feedback.html"];
+const REQUIRED_STATIC_ENTRIES = [
+  "taskpane.html",
+  "commands.html",
+  "feedback.html",
+  "assets/icon-16.png",
+  "assets/icon-32.png",
+  "assets/icon-64.png",
+  "assets/icon-80.png",
+];
 
 export function validateProductionBaseUrl(rawUrl) {
   if (typeof rawUrl !== "string" || rawUrl.length === 0 || rawUrl !== rawUrl.trim()) {
@@ -21,13 +31,13 @@ export function validateProductionBaseUrl(rawUrl) {
     throw productionUrlError();
   }
 
-  const hostname = url.hostname.toLowerCase();
-  const isLoopback = hostname === "localhost" || hostname.endsWith(".localhost") ||
-    hostname === "[::1]" || /^127(?:\.\d{1,3}){3}$/.test(hostname);
+  const hostname = normalizeHostname(url.hostname);
+  const isLocal = hostname === "localhost" || hostname.endsWith(".localhost") ||
+    hostname.endsWith(".local") || isNonPublicIpAddress(hostname);
   const hasCredentials = url.username.length > 0 || url.password.length > 0;
   const hasNonOriginParts = url.pathname !== "/" || url.search.length > 0 || url.hash.length > 0;
 
-  if (url.protocol !== "https:" || isLoopback || hasCredentials || hasNonOriginParts) {
+  if (url.protocol !== "https:" || isLocal || hasCredentials || hasNonOriginParts) {
     throw productionUrlError();
   }
   return url.origin;
@@ -43,7 +53,7 @@ export async function packageRelease({ baseUrl, outDir, projectRoot = defaultPro
   const resolvedOutDir = resolve(resolvedProjectRoot, outDir);
   const distDir = resolve(resolvedProjectRoot, "dist");
   const manifestTemplatePath = resolve(resolvedProjectRoot, "manifest", "manifest.template.xml");
-  assertSafeOutputPath(resolvedOutDir, resolvedProjectRoot, distDir, manifestTemplatePath);
+  await assertSafeOutputPath(resolvedOutDir, resolvedProjectRoot, distDir, manifestTemplatePath);
 
   const [template] = await Promise.all([
     readFile(manifestTemplatePath, "utf8").catch(() => {
@@ -63,8 +73,8 @@ export async function packageRelease({ baseUrl, outDir, projectRoot = defaultPro
   try {
     await cp(distDir, stagedSite, { recursive: true, force: true });
     await writeFile(resolve(stagedRelease, "manifest.production.xml"), manifest, "utf8");
-    await rm(resolvedOutDir, { recursive: true, force: true });
-    await rename(stagedRelease, resolvedOutDir);
+    await assertSafeOutputPath(resolvedOutDir, resolvedProjectRoot, distDir, manifestTemplatePath);
+    await replaceReleaseDirectory(stagedRelease, resolvedOutDir);
   } finally {
     await rm(stagedRelease, { recursive: true, force: true });
   }
@@ -118,15 +128,113 @@ async function verifyStaticBuild(distDir) {
   }));
 }
 
-function assertSafeOutputPath(outDir, projectRoot, distDir, manifestTemplatePath) {
-  const manifestDir = dirname(manifestTemplatePath);
-  const isFilesystemRoot = dirname(outDir) === outDir;
-  const overwritesProject = outDir === projectRoot || isInside(outDir, projectRoot);
-  const overwritesInput = outDir === distDir || isInside(distDir, outDir) ||
-    outDir === manifestDir || isInside(manifestDir, outDir);
+async function assertSafeOutputPath(outDir, projectRoot, distDir, manifestTemplatePath) {
+  const [canonicalOutDir, canonicalProjectRoot, canonicalDistDir, canonicalManifestDir] = await Promise.all([
+    canonicalizePotentialPath(outDir),
+    realpath(projectRoot),
+    canonicalizePotentialPath(distDir),
+    canonicalizePotentialPath(dirname(manifestTemplatePath)),
+  ]);
+  const isFilesystemRoot = dirname(canonicalOutDir) === canonicalOutDir;
+  const overwritesProject = canonicalOutDir === canonicalProjectRoot ||
+    isInside(canonicalOutDir, canonicalProjectRoot);
+  const overwritesInput = canonicalOutDir === canonicalDistDir ||
+    isInside(canonicalDistDir, canonicalOutDir) ||
+    isInside(canonicalOutDir, canonicalDistDir) ||
+    canonicalOutDir === canonicalManifestDir ||
+    isInside(canonicalManifestDir, canonicalOutDir) ||
+    isInside(canonicalOutDir, canonicalManifestDir);
   if (isFilesystemRoot || overwritesProject || overwritesInput) {
     throw new Error("Release output must not overwrite the project or build input");
   }
+}
+
+async function canonicalizePotentialPath(inputPath) {
+  let cursor = resolve(inputPath);
+  const missingSegments = [];
+
+  while (true) {
+    try {
+      const canonicalAncestor = await realpath(cursor);
+      return resolve(canonicalAncestor, ...missingSegments.reverse());
+    } catch (error) {
+      if (!isMissingPathError(error)) {
+        throw error;
+      }
+      const parent = dirname(cursor);
+      if (parent === cursor) {
+        throw error;
+      }
+      missingSegments.push(basename(cursor));
+      cursor = parent;
+    }
+  }
+}
+
+async function replaceReleaseDirectory(stagedRelease, outDir) {
+  const existingOutput = await stat(outDir).catch((error) => {
+    if (isMissingPathError(error)) return undefined;
+    throw error;
+  });
+  if (existingOutput === undefined) {
+    await rename(stagedRelease, outDir);
+    return;
+  }
+
+  const backupDir = resolve(dirname(outDir), `.${basename(outDir)}.backup-${randomUUID()}`);
+  await rename(outDir, backupDir);
+  try {
+    await rename(stagedRelease, outDir);
+  } catch (swapError) {
+    try {
+      await rename(backupDir, outDir);
+    } catch (rollbackError) {
+      throw new AggregateError(
+        [swapError, rollbackError],
+        "Release replacement failed and the previous release could not be restored",
+      );
+    }
+    throw swapError;
+  }
+  await rm(backupDir, { recursive: true, force: true });
+}
+
+function normalizeHostname(hostname) {
+  return hostname.toLowerCase().replace(/^\[|\]$/g, "").replace(/\.+$/, "");
+}
+
+function isNonPublicIpAddress(hostname) {
+  const ipVersion = isIP(hostname);
+  if (ipVersion === 4) return isNonPublicIpv4(hostname);
+  if (ipVersion !== 6) return false;
+
+  const normalized = hostname.toLowerCase();
+  const mappedIpv4 = ipv4FromMappedIpv6(normalized);
+  if (mappedIpv4 !== undefined) return isNonPublicIpv4(mappedIpv4);
+  return normalized === "::" || normalized === "::1" ||
+    /^(?:fc|fd)/.test(normalized) || /^fe[89ab]/.test(normalized);
+}
+
+function isNonPublicIpv4(address) {
+  const octets = address.split(".").map(Number);
+  const [first, second] = octets;
+  return first === 0 || first === 10 || first === 127 || first >= 224 ||
+    (first === 100 && second >= 64 && second <= 127) ||
+    (first === 169 && second === 254) ||
+    (first === 172 && second >= 16 && second <= 31) ||
+    (first === 192 && second === 168);
+}
+
+function ipv4FromMappedIpv6(address) {
+  const mapped = address.match(/^::ffff:([0-9a-f]{1,4}):([0-9a-f]{1,4})$/);
+  if (mapped === null) return undefined;
+  const high = Number.parseInt(mapped[1], 16);
+  const low = Number.parseInt(mapped[2], 16);
+  return `${high >> 8}.${high & 0xff}.${low >> 8}.${low & 0xff}`;
+}
+
+function isMissingPathError(error) {
+  return error instanceof Error && "code" in error && error.code === "ENOENT";
 }
 
 function isInside(parent, candidate) {
