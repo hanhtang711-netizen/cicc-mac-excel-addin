@@ -81,6 +81,37 @@ export interface ChartPlan {
   addLinearTrendline: boolean;
 }
 
+export interface ChartPlacementPlan {
+  side: "right" | "below";
+  gutterPoints: number;
+}
+
+export interface ChartStyleInput {
+  seriesCount: number;
+  options: ChartOptions;
+  sourceFormat: string;
+  categoryFormat?: string;
+  selectionColumn?: number;
+  selectionColumnCount?: number;
+  estimatedChartColumns?: number;
+}
+
+export interface ChartStylePlan {
+  seriesColors: string[];
+  widthPoints: number;
+  heightPoints: number;
+  legendPosition: LegendPosition;
+  chartAreaFill: string;
+  plotAreaFill: string;
+  showOuterBorder: boolean;
+  textSizePoints: number;
+  majorGridlineColor: string;
+  valueAxisNumberFormat: string | undefined;
+  categoryAxisNumberFormat: string | undefined;
+  warnings: string[];
+  placement: ChartPlacementPlan;
+}
+
 export interface FeedbackPort {
   showError(error: unknown): Promise<void>;
   showWarnings(codes: string[]): Promise<void>;
