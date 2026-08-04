@@ -52,12 +52,23 @@ describe("command handlers", () => {
 
   it("shows returned warnings and completes exactly once", async () => {
     const dependencies = makeDependencies();
-    dependencies.charts.create.mockResolvedValue({ ok: true, warnings: ["font_fallback"] });
+    dependencies.charts.create.mockResolvedValue({ ok: true, warnings: ["series_palette_reused"] });
     const event = makeEvent();
 
     await createCommandHandlers(dependencies).createColumnChart?.(event);
 
-    expect(dependencies.feedback.showWarnings).toHaveBeenCalledWith(["font_fallback"]);
+    expect(dependencies.feedback.showWarnings).toHaveBeenCalledWith(["series_palette_reused"]);
+    expect(event.completed).toHaveBeenCalledOnce();
+  });
+
+  it("does not open feedback after a successful command without warnings", async () => {
+    const dependencies = makeDependencies();
+    const event = makeEvent();
+
+    await createCommandHandlers(dependencies).createColumnChart?.(event);
+
+    expect(dependencies.feedback.showWarnings).not.toHaveBeenCalled();
+    expect(dependencies.feedback.showError).not.toHaveBeenCalled();
     expect(event.completed).toHaveBeenCalledOnce();
   });
 

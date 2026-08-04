@@ -1,14 +1,13 @@
 import { readAdvancedOptions } from "./app/advancedOptions";
 import { ChartService, type ServiceResult } from "./app/chartService";
-import { DialogFeedback } from "./app/userFeedback";
+import { messageForError, messageForWarning } from "./app/userFeedback";
 import { CHART_CATALOG } from "./charts/chartCatalog";
-import { AddinError } from "./core/errors";
-import type { FeedbackPort } from "./core/types";
+import { getCapabilities, type RequirementChecker } from "./office/capability";
 import { ExcelGateway } from "./office/excelGateway";
 
 type ChartCreator = Pick<ChartService, "create">;
 
-export function initializeAdvancedChartPane(chartService: ChartCreator, feedback: FeedbackPort): void {
+export function initializeAdvancedChartPane(chartService: ChartCreator): void {
   const form = document.querySelector<HTMLFormElement>("#advanced-chart-form");
   const controls = document.querySelector<HTMLFieldSetElement>("#chart-form-controls");
   const status = document.querySelector<HTMLElement>("#status");
@@ -51,10 +50,9 @@ export function initializeAdvancedChartPane(chartService: ChartCreator, feedback
     try {
       const request = readAdvancedOptions(form);
       const result = await chartService.create(request.kind, request.options);
-      await showResult(status, result, feedback);
+      showResult(status, result);
     } catch (error) {
-      setStatus(status, "error", errorMessage(error));
-      await bestEffort(() => feedback.showError(error));
+      setStatus(status, "error", messageForError(error));
     } finally {
       submitButton.disabled = false;
     }
@@ -71,13 +69,12 @@ function populateChartKinds(select: HTMLSelectElement): void {
   }
 }
 
-async function showResult(status: HTMLElement, result: ServiceResult, feedback: FeedbackPort): Promise<void> {
+function showResult(status: HTMLElement, result: ServiceResult): void {
   if (result.warnings.length === 0) {
     setStatus(status, "success", "图表已生成。");
     return;
   }
-  setStatus(status, "warning", "图表已生成，但部分系列将重复使用配色。");
-  await bestEffort(() => feedback.showWarnings(result.warnings));
+  setStatus(status, "warning", messageForWarning(result.warnings[0] ?? ""));
 }
 
 function input<T extends HTMLInputElement | HTMLSelectElement>(
@@ -94,20 +91,9 @@ function setStatus(status: HTMLElement, state: "loading" | "success" | "warning"
   status.textContent = message;
 }
 
-function errorMessage(error: unknown): string {
-  if (error instanceof AddinError && error.code === "unsupported_layout" &&
-    (error.details as { reason?: string } | undefined)?.reason === "invalid_custom_size") {
-    return "请填写有效的自定义宽度和高度（大于 0 的厘米数）。";
-  }
-  return "生成图表失败。请检查当前选区和设置后重试。";
-}
-
-async function bestEffort(operation: () => Promise<void>): Promise<void> {
-  try {
-    await operation();
-  } catch {
-    // The visible status is the primary feedback channel; dialog feedback is supplementary.
-  }
+export function createAdvancedChartService(requirements: RequirementChecker): ChartService {
+  const capabilities = getCapabilities(requirements);
+  return new ChartService(new ExcelGateway(), capabilities);
 }
 
 if (typeof Office !== "undefined") {
@@ -119,6 +105,6 @@ if (typeof Office !== "undefined") {
       }
       return;
     }
-    initializeAdvancedChartPane(new ChartService(new ExcelGateway()), new DialogFeedback());
+    initializeAdvancedChartPane(createAdvancedChartService(Office.context.requirements));
   });
 }

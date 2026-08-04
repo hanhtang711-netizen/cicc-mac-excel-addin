@@ -45,7 +45,9 @@ async function runCommand(
 ): Promise<void> {
   try {
     const result = await operation();
-    await feedback.showWarnings(result.warnings);
+    if (result.warnings.length > 0) {
+      await feedback.showWarnings(result.warnings);
+    }
   } catch (error) {
     try {
       await feedback.showError(error);

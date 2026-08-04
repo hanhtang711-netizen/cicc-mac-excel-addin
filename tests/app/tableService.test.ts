@@ -2,6 +2,13 @@ import { describe, expect, it, vi } from "vitest";
 import { TableService } from "../../src/app/tableService";
 import { AddinError } from "../../src/core/errors";
 import type { SelectionSnapshot } from "../../src/core/types";
+import type { AddinCapabilities } from "../../src/office/capability";
+
+const supportedCapabilities: AddinCapabilities = {
+  base: true,
+  explodedPie: true,
+  trendlines: true,
+};
 
 const selectionSnapshot: SelectionSnapshot = {
   worksheetName: "Data",
@@ -19,7 +26,7 @@ describe("TableService", () => {
   it("reads and applies one independent standard-table plan", async () => {
     const gateway = makeGateway();
 
-    const result = await new TableService(gateway).formatStandard();
+    const result = await new TableService(gateway, supportedCapabilities).formatStandard();
 
     expect(result).toEqual({ ok: true, warnings: [] });
     expect(gateway.readSelection).toHaveBeenCalledOnce();
@@ -33,7 +40,7 @@ describe("TableService", () => {
   it("reads and applies one zebra-only plan", async () => {
     const gateway = makeGateway();
 
-    const result = await new TableService(gateway).applyZebra();
+    const result = await new TableService(gateway, supportedCapabilities).applyZebra();
 
     expect(result).toEqual({ ok: true, warnings: [] });
     expect(gateway.readSelection).toHaveBeenCalledOnce();
@@ -53,12 +60,31 @@ describe("TableService", () => {
   ])("rejects a %s selection before applying a table plan", async (_label, snapshot) => {
     const gateway = makeGateway(snapshot);
 
-    const error = await new TableService(gateway).formatStandard().catch((caught: unknown) => caught);
+    const error = await new TableService(gateway, supportedCapabilities).formatStandard().catch((caught: unknown) => caught);
 
     expect(error).toBeInstanceOf(AddinError);
     expect(error).toMatchObject({ code: "invalid_selection" });
     expect(gateway.applyTablePlan).not.toHaveBeenCalled();
   });
+
+  it.each(["formatStandard", "applyZebra"] as const)(
+    "rejects %s before reading when the base API is unsupported",
+    async (method) => {
+      const gateway = makeGateway();
+      const service = new TableService(gateway, {
+        base: false,
+        explodedPie: false,
+        trendlines: false,
+      });
+
+      const error = await service[method]().catch((caught: unknown) => caught);
+
+      expect(error).toBeInstanceOf(AddinError);
+      expect(error).toMatchObject({ code: "unsupported_api" });
+      expect(gateway.readSelection).not.toHaveBeenCalled();
+      expect(gateway.applyTablePlan).not.toHaveBeenCalled();
+    },
+  );
 });
 
 function makeGateway(snapshot: SelectionSnapshot = selectionSnapshot) {

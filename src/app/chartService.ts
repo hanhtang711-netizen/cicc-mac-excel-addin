@@ -1,5 +1,6 @@
 import { buildChartPlan } from "../charts/chartPlanner";
 import { buildChartStylePlan } from "../charts/chartStyle";
+import { AddinError } from "../core/errors";
 import { parseSelection } from "../core/selectionParser";
 import type {
   ChartKind,
@@ -8,6 +9,7 @@ import type {
   ChartStylePlan,
   SelectionSnapshot,
 } from "../core/types";
+import type { AddinCapabilities } from "../office/capability";
 
 export interface ChartGateway {
   readSelection(): Promise<SelectionSnapshot>;
@@ -20,9 +22,13 @@ export interface ServiceResult {
 }
 
 export class ChartService {
-  constructor(private readonly gateway: ChartGateway) {}
+  constructor(
+    private readonly gateway: ChartGateway,
+    private readonly capabilities: AddinCapabilities,
+  ) {}
 
   async create(kind: ChartKind, options: ChartOptions = {}): Promise<ServiceResult> {
+    this.assertSupported(kind, options);
     const snapshot = await this.gateway.readSelection();
     const parsed = parseSelection(snapshot, options.orientation);
     const plan = buildChartPlan(parsed, kind, options);
@@ -37,5 +43,13 @@ export class ChartService {
 
     await this.gateway.createChart(plan, style);
     return { ok: true, warnings: style.warnings };
+  }
+
+  private assertSupported(kind: ChartKind, options: ChartOptions): void {
+    if (!this.capabilities.base ||
+      (kind === "pieExploded" && !this.capabilities.explodedPie) ||
+      (kind === "scatterTrend" && options.addTrendline !== false && !this.capabilities.trendlines)) {
+      throw new AddinError("unsupported_api");
+    }
   }
 }

@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { initializeAdvancedChartPane } from "../../src/taskpane";
-import type { FeedbackPort } from "../../src/core/types";
+import { createAdvancedChartService, initializeAdvancedChartPane } from "../../src/taskpane";
+import { AddinError } from "../../src/core/errors";
 
 function renderPane(): HTMLFormElement {
   document.body.innerHTML = `
@@ -25,11 +25,6 @@ function renderPane(): HTMLFormElement {
   return document.querySelector("form") as HTMLFormElement;
 }
 
-const feedback: FeedbackPort = {
-  showError: vi.fn().mockResolvedValue(undefined),
-  showWarnings: vi.fn().mockResolvedValue(undefined),
-};
-
 describe("advanced chart task pane", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -37,7 +32,7 @@ describe("advanced chart task pane", () => {
   });
 
   it("enables the form and shows only the fields relevant to the selected options", () => {
-    initializeAdvancedChartPane({ create: vi.fn().mockResolvedValue({ ok: true, warnings: [] }) }, feedback);
+    initializeAdvancedChartPane({ create: vi.fn().mockResolvedValue({ ok: true, warnings: [] }) });
     const form = document.querySelector("form") as HTMLFormElement;
     const controls = document.querySelector("fieldset") as HTMLFieldSetElement;
     const kind = form.elements.namedItem("kind") as HTMLSelectElement;
@@ -58,7 +53,7 @@ describe("advanced chart task pane", () => {
 
   it("announces success and restores the submit button after generation", async () => {
     const create = vi.fn().mockResolvedValue({ ok: true, warnings: [] });
-    initializeAdvancedChartPane({ create }, feedback);
+    initializeAdvancedChartPane({ create });
     const form = document.querySelector("form") as HTMLFormElement;
     const button = form.querySelector("button") as HTMLButtonElement;
 
@@ -73,7 +68,7 @@ describe("advanced chart task pane", () => {
 
   it("keeps the pane usable and gives an actionable error for invalid custom size", async () => {
     const create = vi.fn();
-    initializeAdvancedChartPane({ create }, feedback);
+    initializeAdvancedChartPane({ create });
     const form = document.querySelector("form") as HTMLFormElement;
     const size = form.elements.namedItem("sizePreset") as HTMLSelectElement;
     size.value = "custom";
@@ -84,5 +79,44 @@ describe("advanced chart task pane", () => {
     await vi.waitFor(() => expect((form.querySelector("button") as HTMLButtonElement).disabled).toBe(false));
     expect(create).not.toHaveBeenCalled();
     expect(document.querySelector("#status")?.textContent).toContain("请填写有效的自定义宽度和高度");
+  });
+
+  it("shows the shared unsupported-API correction inline", async () => {
+    const create = vi.fn().mockRejectedValue(new AddinError("unsupported_api"));
+    initializeAdvancedChartPane({ create });
+    const form = document.querySelector("form") as HTMLFormElement;
+
+    form.dispatchEvent(new Event("submit", { cancelable: true }));
+
+    await vi.waitFor(() => expect((form.querySelector("button") as HTMLButtonElement).disabled).toBe(false));
+    expect(document.querySelector("#status")?.textContent).toBe(
+      "当前 Excel 版本不支持此图表类型，请升级 Excel。",
+    );
+  });
+
+  it("shows the shared non-blocking warning inline", async () => {
+    const create = vi.fn().mockResolvedValue({
+      ok: true,
+      warnings: ["series_palette_reused"],
+    });
+    initializeAdvancedChartPane({ create });
+    const form = document.querySelector("form") as HTMLFormElement;
+
+    form.dispatchEvent(new Event("submit", { cancelable: true }));
+
+    await vi.waitFor(() => expect((form.querySelector("button") as HTMLButtonElement).disabled).toBe(false));
+    expect(document.querySelector("#status")?.textContent).toBe(
+      "图表已生成。系列超过六个，后续系列将循环使用中金配色。",
+    );
+  });
+
+  it("computes one capability snapshot for the advanced-pane service", async () => {
+    const requirements = { isSetSupported: vi.fn().mockReturnValue(false) };
+    const service = createAdvancedChartService(requirements);
+
+    const error = await service.create("column").catch((caught: unknown) => caught);
+
+    expect(requirements.isSetSupported).toHaveBeenCalledOnce();
+    expect(error).toMatchObject({ code: "unsupported_api" });
   });
 });

@@ -2,6 +2,13 @@ import { describe, expect, it, vi } from "vitest";
 import { ChartService } from "../../src/app/chartService";
 import { AddinError } from "../../src/core/errors";
 import type { SelectionSnapshot } from "../../src/core/types";
+import type { AddinCapabilities } from "../../src/office/capability";
+
+const supportedCapabilities: AddinCapabilities = {
+  base: true,
+  explodedPie: true,
+  trendlines: true,
+};
 
 const selectionSnapshot: SelectionSnapshot = {
   worksheetName: "Data",
@@ -31,7 +38,7 @@ describe("ChartService", () => {
       readSelection: vi.fn().mockResolvedValue(selectionSnapshot),
       createChart: vi.fn().mockResolvedValue(undefined),
     };
-    const service = new ChartService(gateway);
+    const service = new ChartService(gateway, supportedCapabilities);
 
     const result = await service.create("column", { title: "Margins" });
 
@@ -65,7 +72,7 @@ describe("ChartService", () => {
       }),
       createChart: vi.fn().mockResolvedValue(undefined),
     };
-    const service = new ChartService(gateway);
+    const service = new ChartService(gateway, supportedCapabilities);
 
     const error = await service.create("scatterTrend").catch((caught: unknown) => caught);
 
@@ -73,4 +80,75 @@ describe("ChartService", () => {
     expect(error).toMatchObject({ code: "scatter_requires_numeric_x" });
     expect(gateway.createChart).not.toHaveBeenCalled();
   });
+
+  it("rejects an unsupported base API before reading the selection", async () => {
+    const gateway = makeGateway();
+    const service = new ChartService(gateway, {
+      base: false,
+      explodedPie: false,
+      trendlines: false,
+    });
+
+    const error = await service.create("column").catch((caught: unknown) => caught);
+
+    expect(error).toBeInstanceOf(AddinError);
+    expect(error).toMatchObject({ code: "unsupported_api" });
+    expect(gateway.readSelection).not.toHaveBeenCalled();
+    expect(gateway.createChart).not.toHaveBeenCalled();
+  });
+
+  it("rejects an unsupported exploded pie before reading the selection", async () => {
+    const gateway = makeGateway();
+    const service = new ChartService(gateway, {
+      ...supportedCapabilities,
+      explodedPie: false,
+    });
+
+    const error = await service.create("pieExploded").catch((caught: unknown) => caught);
+
+    expect(error).toBeInstanceOf(AddinError);
+    expect(error).toMatchObject({ code: "unsupported_api" });
+    expect(gateway.readSelection).not.toHaveBeenCalled();
+    expect(gateway.createChart).not.toHaveBeenCalled();
+  });
+
+  it("rejects an unsupported default scatter trendline before reading the selection", async () => {
+    const gateway = makeGateway();
+    const service = new ChartService(gateway, {
+      ...supportedCapabilities,
+      trendlines: false,
+    });
+
+    const error = await service.create("scatterTrend").catch((caught: unknown) => caught);
+
+    expect(error).toBeInstanceOf(AddinError);
+    expect(error).toMatchObject({ code: "unsupported_api" });
+    expect(gateway.readSelection).not.toHaveBeenCalled();
+    expect(gateway.createChart).not.toHaveBeenCalled();
+  });
+
+  it("creates scatter without a trendline when only trendlines are unsupported", async () => {
+    const gateway = makeGateway();
+    const service = new ChartService(gateway, {
+      ...supportedCapabilities,
+      trendlines: false,
+    });
+
+    await expect(service.create("scatterTrend", { addTrendline: false })).resolves.toEqual({
+      ok: true,
+      warnings: [],
+    });
+    expect(gateway.readSelection).toHaveBeenCalledOnce();
+    expect(gateway.createChart).toHaveBeenCalledWith(
+      expect.objectContaining({ addLinearTrendline: false }),
+      expect.any(Object),
+    );
+  });
 });
+
+function makeGateway() {
+  return {
+    readSelection: vi.fn().mockResolvedValue(selectionSnapshot),
+    createChart: vi.fn().mockResolvedValue(undefined),
+  };
+}

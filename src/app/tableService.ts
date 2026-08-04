@@ -1,5 +1,6 @@
 import { AddinError } from "../core/errors";
 import type { SelectionSnapshot, TableFormatPlan } from "../core/types";
+import type { AddinCapabilities } from "../office/capability";
 import { buildStandardTablePlan, buildZebraPlan } from "../tables/tablePlanner";
 import type { ServiceResult } from "./chartService";
 
@@ -9,7 +10,10 @@ export interface TableGateway {
 }
 
 export class TableService {
-  constructor(private readonly gateway: TableGateway) {}
+  constructor(
+    private readonly gateway: TableGateway,
+    private readonly capabilities: AddinCapabilities,
+  ) {}
 
   async formatStandard(): Promise<ServiceResult> {
     return this.apply(buildStandardTablePlan);
@@ -20,6 +24,9 @@ export class TableService {
   }
 
   private async apply(buildPlan: (snapshot: SelectionSnapshot) => TableFormatPlan): Promise<ServiceResult> {
+    if (!this.capabilities.base) {
+      throw new AddinError("unsupported_api");
+    }
     const snapshot = await this.gateway.readSelection();
     validateTableSelection(snapshot);
     await this.gateway.applyTablePlan(buildPlan(snapshot));
