@@ -1,3 +1,1 @@
-import "./taskpane.css";
-
 export {};
