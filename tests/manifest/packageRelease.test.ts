@@ -38,6 +38,10 @@ describe("release packager", () => {
     "https://192.168.1.10",
     "https://[fc00::1]",
     "https://[fe80::1]",
+    "https://192.0.2.1",
+    "https://198.18.0.1",
+    "https://[ff02::1]",
+    "https://[::7f00:1]",
     "https://user:secret@excel-addon.example.com",
     "https://excel-addon.example.com/addin",
     "https://excel-addon.example.com/?channel=prod",
@@ -105,6 +109,25 @@ describe("release packager", () => {
 
     expect(await readFile(join(projectRoot, "manifest", "manifest.template.xml"), "utf8"))
       .toContain("{{BASE_URL}}");
+  });
+
+  it("rejects an output path whose leaf is a symbolic link", async () => {
+    const projectRoot = await createProjectFixture();
+    const targetRoot = await mkdtemp(join(tmpdir(), "cicc-release-target-"));
+    temporaryDirectories.push(targetRoot);
+    const targetDir = join(targetRoot, "authorized-target");
+    await mkdir(targetDir);
+    await writeFile(join(targetDir, "keep.txt"), "target-content", "utf8");
+    const linkedOutDir = join(projectRoot, "release-link");
+    await symlink(targetDir, linkedOutDir, "dir");
+
+    await expect(packageRelease({
+      baseUrl: "https://excel-addon.example.com",
+      outDir: linkedOutDir,
+      projectRoot,
+    })).rejects.toThrow("Release output must not be a symbolic link");
+
+    await expect(readFile(join(targetDir, "keep.txt"), "utf8")).resolves.toBe("target-content");
   });
 
   it("restores the previous release when the staged-directory swap fails", async () => {

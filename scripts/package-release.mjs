@@ -1,6 +1,6 @@
 import { execFile } from "node:child_process";
 import { randomUUID } from "node:crypto";
-import { cp, mkdir, mkdtemp, readFile, realpath, rename, rm, stat, writeFile } from "node:fs/promises";
+import { cp, lstat, mkdir, mkdtemp, readFile, realpath, rename, rm, stat, writeFile } from "node:fs/promises";
 import { isIP } from "node:net";
 import { basename, dirname, isAbsolute, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -33,7 +33,7 @@ export function validateProductionBaseUrl(rawUrl) {
 
   const hostname = normalizeHostname(url.hostname);
   const isLocal = hostname === "localhost" || hostname.endsWith(".localhost") ||
-    hostname.endsWith(".local") || isNonPublicIpAddress(hostname);
+    hostname.endsWith(".local") || isIP(hostname) !== 0;
   const hasCredentials = url.username.length > 0 || url.password.length > 0;
   const hasNonOriginParts = url.pathname !== "/" || url.search.length > 0 || url.hash.length > 0;
 
@@ -129,6 +129,14 @@ async function verifyStaticBuild(distDir) {
 }
 
 async function assertSafeOutputPath(outDir, projectRoot, distDir, manifestTemplatePath) {
+  const outputLeaf = await lstat(outDir).catch((error) => {
+    if (isMissingPathError(error)) return undefined;
+    throw error;
+  });
+  if (outputLeaf?.isSymbolicLink()) {
+    throw new Error("Release output must not be a symbolic link");
+  }
+
   const [canonicalOutDir, canonicalProjectRoot, canonicalDistDir, canonicalManifestDir] = await Promise.all([
     canonicalizePotentialPath(outDir),
     realpath(projectRoot),
@@ -201,36 +209,6 @@ async function replaceReleaseDirectory(stagedRelease, outDir) {
 
 function normalizeHostname(hostname) {
   return hostname.toLowerCase().replace(/^\[|\]$/g, "").replace(/\.+$/, "");
-}
-
-function isNonPublicIpAddress(hostname) {
-  const ipVersion = isIP(hostname);
-  if (ipVersion === 4) return isNonPublicIpv4(hostname);
-  if (ipVersion !== 6) return false;
-
-  const normalized = hostname.toLowerCase();
-  const mappedIpv4 = ipv4FromMappedIpv6(normalized);
-  if (mappedIpv4 !== undefined) return isNonPublicIpv4(mappedIpv4);
-  return normalized === "::" || normalized === "::1" ||
-    /^(?:fc|fd)/.test(normalized) || /^fe[89ab]/.test(normalized);
-}
-
-function isNonPublicIpv4(address) {
-  const octets = address.split(".").map(Number);
-  const [first, second] = octets;
-  return first === 0 || first === 10 || first === 127 || first >= 224 ||
-    (first === 100 && second >= 64 && second <= 127) ||
-    (first === 169 && second === 254) ||
-    (first === 172 && second >= 16 && second <= 31) ||
-    (first === 192 && second === 168);
-}
-
-function ipv4FromMappedIpv6(address) {
-  const mapped = address.match(/^::ffff:([0-9a-f]{1,4}):([0-9a-f]{1,4})$/);
-  if (mapped === null) return undefined;
-  const high = Number.parseInt(mapped[1], 16);
-  const low = Number.parseInt(mapped[2], 16);
-  return `${high >> 8}.${high & 0xff}.${low >> 8}.${low & 0xff}`;
 }
 
 function isMissingPathError(error) {

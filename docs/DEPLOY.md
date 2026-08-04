@@ -4,7 +4,7 @@
 
 ## 发布前提
 
-- 已由部署负责人书面确认生产 origin；只接受无用户名密码、路径、query、fragment 的 HTTPS origin。
+- 已由部署负责人书面确认生产 origin；只接受使用 DNS 主机名、且无用户名密码、路径、query、fragment 的 HTTPS origin。为保持 fail-closed，生产打包器拒绝所有 IPv4/IPv6 literal，即使该地址当前可从公网访问。
 - 静态站点能在该 origin 的根路径提供文件，并使用有效、受信任的 TLS 证书。
 - 站点允许加载 `https://appsforoffice.microsoft.com/lib/1/hosted/office.js`。这是 Microsoft 的 Office.js CDN。
 - 当前提交已经通过自动化 gate，并附有填写完成的 Mac Excel 验收记录（由 [TEST_CHECKLIST.md](./TEST_CHECKLIST.md) 复制后填写）；不要把未勾选的清单模板当作验收证据，也不要从未验收的工作区直接发布。
@@ -23,7 +23,7 @@ npm run release -- --base-url "$ADDIN_BASE_URL" --out "$RELEASE_OUT"
 ./node_modules/.bin/office-addin-manifest validate "$RELEASE_OUT/manifest.production.xml"
 ```
 
-`npm run release` 会先运行 Vite production build，再 fail-closed 地校验公网 URL、构建入口、四个 manifest 图标、manifest token，以及解析符号链接后的真实输出路径。导入打包模块不会自动执行 CLI。显式 `--out` 是唯一可能被替换的输出目录；不要把仓库根目录、`dist/`、`manifest/` 或它们的符号链接别名用作输出。替换已有输出时，打包器会先保留同目录备份；若新目录切换失败，会恢复上一版，再清理临时目录。
+`npm run release` 会先运行 Vite production build，再 fail-closed 地校验公网 DNS URL、构建入口、四个 manifest 图标、manifest token，以及解析父级符号链接后的真实输出路径。导入打包模块不会自动执行 CLI。显式 `--out` 是唯一可能被替换的输出目录；不要把仓库根目录、`dist/`、`manifest/` 或它们的符号链接别名用作输出，`--out` 的末级路径本身也不能是符号链接。替换已有输出时，打包器会先保留同目录备份；若新目录切换失败，会恢复上一版，再清理临时目录。
 
 输出布局：
 
