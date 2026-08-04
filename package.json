@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit",
     "icons": "node scripts/generate-icons.mjs",
     "manifest:dev": "node scripts/render-manifest.mjs https://localhost:3000 manifest/manifest.dev.xml",
-    "manifest:validate": "office-addin-manifest validate manifest/manifest.dev.xml"
+    "manifest:validate": "office-addin-manifest validate manifest/manifest.dev.xml",
+    "release": "node scripts/package-release.mjs"
   },
   "devDependencies": {
     "@types/office-js": "^1.0.604",
