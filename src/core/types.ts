@@ -70,6 +70,7 @@ export interface ChartSeriesPlan {
 export interface ChartPlan {
   kind: ChartKind;
   excelType: string;
+  worksheetName: string;
   sourceAddress: string;
   orientation: SeriesOrientation;
   series: ChartSeriesPlan[];

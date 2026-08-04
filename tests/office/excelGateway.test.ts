@@ -1,4 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { buildChartPlan } from "../../src/charts/chartPlanner";
+import { parseSelection } from "../../src/core/selectionParser";
 import { ExcelGateway } from "../../src/office/excelGateway";
 import { AddinError } from "../../src/core/errors";
 import type { ChartPlan, ChartStylePlan } from "../../src/core/types";
@@ -6,6 +8,7 @@ import type { ChartPlan, ChartStylePlan } from "../../src/core/types";
 const plan: ChartPlan = {
   kind: "column",
   excelType: "columnClustered",
+  worksheetName: "Data",
   sourceAddress: "'Data'!$A$1:$C$4",
   orientation: "columns",
   series: [
@@ -109,6 +112,55 @@ describe("ExcelGateway.readSelection", () => {
 });
 
 describe("ExcelGateway.createChart", () => {
+  it("creates on the worksheet read earlier when the active sheet later changes", async () => {
+    const data = makeChartHarness("Data");
+    const other = makeChartHarness("Other");
+    let activeWorksheet = data.worksheet;
+    const getItem = vi.fn(() => data.worksheet);
+    const selectionRange = {
+      address: "Data!A1:C4",
+      rowIndex: 0,
+      columnIndex: 0,
+      rowCount: 4,
+      columnCount: 3,
+      values: [["X", "Pulp", "Paper"], [1, 10, 20], [2, 11, 21], [3, 12, 22]],
+      text: [["X", "Pulp", "Paper"], ["1", "10", "20"], ["2", "11", "21"], ["3", "12", "22"]],
+      numberFormat: [
+        ["General", "General", "General"],
+        ["0", "0", "0"],
+        ["0", "0", "0"],
+        ["0", "0", "0"],
+      ],
+      load: vi.fn(),
+    };
+    stubExcel({
+      workbook: {
+        getSelectedRanges: vi.fn(() => ({ areaCount: 1, load: vi.fn() })),
+        getSelectedRange: vi.fn(() => selectionRange),
+        worksheets: {
+          getActiveWorksheet: vi.fn(() => activeWorksheet),
+          getItem,
+        },
+      },
+      sync: data.sync,
+    });
+    const gateway = new ExcelGateway();
+    const snapshot = await gateway.readSelection();
+    activeWorksheet = other.worksheet;
+    const switchedPlan = buildChartPlan(parseSelection(snapshot), "scatterTrend");
+
+    await gateway.createChart(switchedPlan, style);
+
+    expect(snapshot.worksheetName).toBe("Data");
+    expect(getItem).toHaveBeenCalledWith("Data");
+    expect(data.chartsAdd).toHaveBeenCalledWith("XYScatter", data.sourceRange, "Columns");
+    expect(other.chartsAdd).not.toHaveBeenCalled();
+    expect(data.worksheet.getRange).toHaveBeenCalledWith("A1:C4");
+    expect(data.worksheet.getRange).toHaveBeenCalledWith("$A$2:$A$4");
+    expect(data.worksheet.getRange).toHaveBeenCalledWith("$B$2:$B$4");
+    expect(data.worksheet.getRange).toHaveBeenCalledWith("$C$2:$C$4");
+  });
+
   it("creates and styles a native chart using live selection geometry", async () => {
     const fake = makeChartHarness();
     stubExcel(fake.context);
@@ -160,9 +212,9 @@ describe("ExcelGateway.createChart", () => {
     expect(fake.defaultSeries.delete).toHaveBeenCalledOnce();
     expect(fake.addedSeries).toHaveLength(2);
     expect(fake.addedSeries[0].name).toBe("Pulp");
-    expect(fake.addedSeries[0].setXAxisValues).toHaveBeenCalledWith(fake.ranges.get("'Data'!$A$2:$A$4"));
-    expect(fake.addedSeries[0].setValues).toHaveBeenCalledWith(fake.ranges.get("'Data'!$B$2:$B$4"));
-    expect(fake.addedSeries[1].setValues).toHaveBeenCalledWith(fake.ranges.get("'Data'!$C$2:$C$4"));
+    expect(fake.addedSeries[0].setXAxisValues).toHaveBeenCalledWith(fake.ranges.get("$A$2:$A$4"));
+    expect(fake.addedSeries[0].setValues).toHaveBeenCalledWith(fake.ranges.get("$B$2:$B$4"));
+    expect(fake.addedSeries[1].setValues).toHaveBeenCalledWith(fake.ranges.get("$C$2:$C$4"));
     expect(fake.addedSeries[0].trendlines.add).toHaveBeenCalledWith("Linear");
     expect(fake.addedSeries[1].trendlines.add).toHaveBeenCalledWith("Linear");
   });
@@ -231,7 +283,7 @@ function stubExcel(context: object): void {
   });
 }
 
-function makeChartHarness() {
+function makeChartHarness(name = "Data") {
   const makeFill = () => ({ setSolidColor: vi.fn() });
   const points = [
     { format: { fill: makeFill() } },
@@ -288,7 +340,11 @@ function makeChartHarness() {
     },
   };
   const sourceRange = { left: 20, top: 40, width: 300, height: 60, load: vi.fn() };
-  const ranges = new Map<string, object>([[plan.sourceAddress, sourceRange]]);
+  const ranges = new Map<string, object>([
+    [plan.sourceAddress, sourceRange],
+    ["$A$1:$C$4", sourceRange],
+    ["A1:C4", sourceRange],
+  ]);
   const getRange = vi.fn((address: string) => {
     if (!ranges.has(address)) {
       ranges.set(address, { address, load: vi.fn() });
@@ -297,10 +353,15 @@ function makeChartHarness() {
   });
   const chartsAdd = vi.fn(() => chart);
   const sync = vi.fn().mockResolvedValue(undefined);
-  const worksheet = { getRange, charts: { add: chartsAdd } };
+  const worksheet = { name, load: vi.fn(), getRange, charts: { add: chartsAdd } };
   return {
     context: {
-      workbook: { worksheets: { getActiveWorksheet: vi.fn(() => worksheet) } },
+      workbook: {
+        worksheets: {
+          getActiveWorksheet: vi.fn(() => worksheet),
+          getItem: vi.fn(() => worksheet),
+        },
+      },
       sync,
     },
     chart,
@@ -314,5 +375,6 @@ function makeChartHarness() {
     sync,
     categoryAxis,
     valueAxis,
+    worksheet,
   };
 }

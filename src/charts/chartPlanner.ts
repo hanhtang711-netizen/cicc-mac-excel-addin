@@ -18,6 +18,7 @@ export function buildChartPlan(
   return {
     kind,
     excelType: CHART_CATALOG[kind].excelType,
+    worksheetName: parsed.worksheetName,
     sourceAddress: parsed.sourceAddress,
     orientation: options.orientation ?? parsed.orientation,
     series: parsed.series.map((series) => ({

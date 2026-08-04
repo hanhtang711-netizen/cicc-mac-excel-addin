@@ -25,8 +25,8 @@ export class ExcelGateway {
 
   async createChart(plan: ChartPlan, style: ChartStylePlan): Promise<void> {
     await Excel.run(async (context) => {
-      const worksheet = context.workbook.worksheets.getActiveWorksheet();
-      const sourceRange = worksheet.getRange(plan.sourceAddress);
+      const worksheet = context.workbook.worksheets.getItem(plan.worksheetName);
+      const sourceRange = worksheet.getRange(localAddress(plan.sourceAddress));
       sourceRange.load("left,top,width,height");
       await context.sync();
 
@@ -109,13 +109,18 @@ function addScatterSeries(
 ): void {
   plan.series.forEach((seriesPlan, index) => {
     const series = chart.series.add(seriesPlan.name, index);
-    series.setXAxisValues(worksheet.getRange(seriesPlan.categoryAddress));
-    series.setValues(worksheet.getRange(seriesPlan.valuesAddress));
+    series.setXAxisValues(worksheet.getRange(localAddress(seriesPlan.categoryAddress)));
+    series.setValues(worksheet.getRange(localAddress(seriesPlan.valuesAddress)));
     setSeriesColor(series, style.seriesColors[index]);
     if (plan.addLinearTrendline) {
       series.trendlines.add(Excel.ChartTrendlineType.linear);
     }
   });
+}
+
+function localAddress(address: string): string {
+  const separator = address.lastIndexOf("!");
+  return separator < 0 ? address : address.slice(separator + 1);
 }
 
 function applySeriesColors(series: readonly Excel.ChartSeries[], colors: readonly string[]): void {
