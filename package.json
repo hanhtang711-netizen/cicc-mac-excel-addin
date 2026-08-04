@@ -1,0 +1,25 @@
+{
+  "name": "cicc-mac-excel-addin",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0",
+    "build": "vite build",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "icons": "node scripts/generate-icons.mjs",
+    "manifest:dev": "node scripts/render-manifest.mjs https://localhost:3000 manifest/manifest.dev.xml",
+    "manifest:validate": "office-addin-manifest validate manifest/manifest.dev.xml"
+  },
+  "devDependencies": {
+    "@types/office-js": "^1.0.604",
+    "@vitejs/plugin-basic-ssl": "^2.3.0",
+    "jsdom": "^30.0.1",
+    "office-addin-manifest": "^2.1.6",
+    "sharp": "^0.35.3",
+    "typescript": "^7.0.2",
+    "vite": "^8.2.0",
+    "vitest": "^4.1.10"
+  }
+}
