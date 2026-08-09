@@ -287,6 +287,7 @@ async function colorPiePoints(
     const color = CICC_SERIES_COLORS[index % CICC_SERIES_COLORS.length];
     if (color !== undefined) {
       point.format.fill.setSolidColor(color);
+      point.format.border.color = color;
     }
   });
 }

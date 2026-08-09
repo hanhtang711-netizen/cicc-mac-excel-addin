@@ -300,6 +300,8 @@ describe("ExcelGateway.createChart", () => {
 
     expect(fake.points[0].format.fill.setSolidColor).toHaveBeenCalledWith("#640000");
     expect(fake.points[1].format.fill.setSolidColor).toHaveBeenCalledWith("#B9B8A6");
+    expect(fake.points[0].format.border.color).toBe("#640000");
+    expect(fake.points[1].format.border.color).toBe("#B9B8A6");
   });
 
   it("does not access axes that a pie chart does not expose", async () => {
@@ -486,9 +488,9 @@ function stubExcel(context: object): void {
 function makeChartHarness(name = "Data") {
   const makeFill = () => ({ setSolidColor: vi.fn() });
   const points = [
-    { format: { fill: makeFill() } },
-    { format: { fill: makeFill() } },
-    { format: { fill: makeFill() } },
+    { format: { fill: makeFill(), border: { color: "" } } },
+    { format: { fill: makeFill(), border: { color: "" } } },
+    { format: { fill: makeFill(), border: { color: "" } } },
   ];
   const makeSeries = (seriesPoints: typeof points = []) => {
     const trendline = { format: { line: { color: "", weight: 0 } } };
