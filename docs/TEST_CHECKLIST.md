@@ -9,7 +9,7 @@
 - [x] `npm run build` 通过，`dist/` 含 commands、feedback、taskpane 三个 HTML 入口及 assets。
 - [x] `npm run manifest:dev` 通过，开发 manifest 已生成。
 - [x] `git diff --check` 通过。
-- [ ] `npm run manifest:validate`：当前沙箱无法解析 `validationgateway.omex.office.net`，必须在联网环境重跑，不能记为 schema 通过。
+- [x] `npm run manifest:validate`：Office 官方校验服务确认 manifest schema、HTTPS URL、图标与目标 Office 平台均有效。
 - [ ] 可信 HTTPS 页面检查：需在可读取 Office 开发证书的会话中启动服务器后检查 `/taskpane.html` 与 `/commands.html`。
 
 ## 固定回归：Mac 普通折线图
@@ -76,7 +76,8 @@
 
 ## 安装、持久化与隐私
 
-- [ ] Excel for Mac 16.111.2 旁加载 `manifest.dev.xml` 后显示“中金工具”页签和四个入口：生成图表、高级生成、格式化表格、斑马纹。
+- [x] Excel for Mac 已从本机 `wef` 目录识别“中金工具”为开发人员加载项。
+- [ ] Excel for Mac 16.111.2 功能区显示“中金工具”页签和四个入口：生成图表、高级生成、格式化表格、斑马纹。
 - [ ] 高级任务窗格可打开、生成图表、显示成功/错误提示并正常关闭。
 - [ ] 完全退出并重启 Excel 后，页签、命令和已保存图表仍可用。
 - [ ] 只向静态 host 和 Office.js CDN 请求资源，不上传选区、values、formulas 或图表数据。
@@ -84,4 +85,4 @@
 
 ## 当前实机阻塞
 
-2026-08-05 本轮尝试通过 Computer Use 控制 Microsoft Excel 时，桌面控制权限未获系统批准；同时自动审批额度已耗尽，无法通过终端启动需读取用户 Office 证书的 HTTPS 服务。因此本文件只勾选已有直接证据的自动化项，所有 Mac Excel 实机项保持未勾选。
+2026-08-09 已恢复本机 Excel 控制、HTTPS 开发服务器和 Office manifest 官方校验。当前剩余实机阻塞是：Excel 能识别开发人员加载项“中金工具”，但尚未将其 VersionOverrides 自定义页签呈现在功能区；需继续排查 Mac Office 的命令面加载/缓存层。图表与表格实机项在页签显示前保持未勾选。
