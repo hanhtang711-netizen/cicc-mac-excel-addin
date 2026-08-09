@@ -2,11 +2,12 @@ import type { ChartKind, ChartSeriesStyle, ChartStyleInput, ChartStylePlan } fro
 
 export const CICC_SERIES_COLORS = [
   "#640000",
-  "#8A2626",
+  "#B9B8A6",
   "#3D889A",
-  "#646C86",
   "#BE995D",
+  "#646C86",
   "#DD965D",
+  "#44546A",
 ] as const;
 
 export const cmToPoints = (centimeters: number): number => centimeters * 28.3464567;

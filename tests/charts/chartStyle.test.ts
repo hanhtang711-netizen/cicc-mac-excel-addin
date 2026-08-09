@@ -31,13 +31,13 @@ describe("CICC chart style", () => {
     });
   });
 
-  it("cycles the six exact series colors", () => {
-    const style = buildChartStylePlan({ kind: "line", seriesCount: 8, sourceFormat: "0.0%" });
+  it("cycles the seven approved chart colors", () => {
+    const style = buildChartStylePlan({ kind: "line", seriesCount: 9, sourceFormat: "0.0%" });
 
     expect(style.seriesColors).toEqual([
       ...CICC_SERIES_COLORS,
       "#640000",
-      "#8A2626",
+      "#B9B8A6",
     ]);
     expect(style.warnings).toContain("series_palette_reused");
   });

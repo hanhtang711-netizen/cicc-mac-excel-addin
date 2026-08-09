@@ -49,24 +49,40 @@ export class ExcelGateway {
         chart.series.load("items");
         await context.sync();
 
-        stage = "series-style";
-        if (plan.kind === "scatterTrend") {
-          for (const existingSeries of chart.series.items) {
-            existingSeries.delete();
+        // These are non-negotiable CICC defaults. Write them in isolated
+        // batches before optional series/axis styling: on Mac, an unsupported
+        // styling property must not leave Excel's placeholder title or labels.
+        await applyEssentialChartCleanup(context, chart, style);
+
+        // A chart that Excel has created successfully is more valuable than a
+        // perfect-looking chart that is rolled back because one optional style
+        // property is unavailable on a particular Mac build. Keep creation
+        // fatal, but make all CICC visual refinements best-effort.
+        try {
+          stage = "series-style";
+          if (plan.kind === "scatterTrend") {
+            for (const existingSeries of chart.series.items) {
+              existingSeries.delete();
+            }
+            addScatterSeries(worksheet, chart, plan, style);
+          } else {
+            applySeriesStyles(chart.series.items, plan, style);
           }
-          addScatterSeries(worksheet, chart, plan, style);
-        } else {
-          applySeriesStyles(chart.series.items, plan, style);
+
+          if (plan.kind === "pie" || plan.kind === "pieExploded") {
+            await colorPiePoints(context, chart);
+          }
+
+          stage = "common-style";
+          applyChartStyle(chart, plan, style, sourceRange);
+          stage = "final-sync";
+          await context.sync();
+        } catch {
+          // Leave the native chart in place if a non-essential format request
+          // fails. This is required for cross-version Mac Excel compatibility.
         }
 
-        if (plan.kind === "pie" || plan.kind === "pieExploded") {
-          await colorPiePoints(context, chart);
-        }
-
-        stage = "common-style";
-        applyChartStyle(chart, plan, style, sourceRange);
-        stage = "final-sync";
-        await context.sync();
+        await applyEssentialChartCleanup(context, chart, style);
       } catch (cause) {
         const failureStage = stage;
         if (chart !== undefined) {
@@ -236,7 +252,9 @@ function applySeriesStyle(
 
   if (style.seriesStyle === "fill-no-border") {
     series.format.fill.setSolidColor(color);
-    series.format.line.clear();
+    // Mac Excel may reject line.clear() for a newly-created column series.
+    // The rejected batch can then leave later series in theme colours. Excel
+    // defaults column outlines to none, so only set the reliable fill here.
     return;
   }
   if (style.seriesStyle === "pie-points") {
@@ -288,15 +306,12 @@ function applyChartStyle(
     ? sourceRange.top + sourceRange.height + style.placement.gutterPoints
     : sourceRange.top;
 
-  chart.title.visible = style.showTitle;
-
   chart.legend.visible = style.legendPosition !== "none";
   if (style.legendPosition !== "none") {
     chart.legend.position = resolveLegendPosition(style.legendPosition);
     chart.legend.overlay = style.legendOverlay;
   }
 
-  chart.dataLabels.showValue = style.showDataLabels;
   chart.format.fill.setSolidColor(style.chartAreaFill);
   chart.plotArea.format.fill.setSolidColor(style.plotAreaFill);
   if (!style.showOuterBorder) {
@@ -310,15 +325,48 @@ function applyChartStyle(
     applyAxisStyle(
       chart.axes.categoryAxis,
       "Minimum",
+      "Outside",
       style.categoryAxisNumberFormat,
       style,
     );
     applyAxisStyle(
       chart.axes.valueAxis,
       "Automatic",
+      "None",
       style.valueAxisNumberFormat,
       style,
     );
+  }
+}
+
+async function applyEssentialChartCleanup(
+  context: Excel.RequestContext,
+  chart: Excel.Chart,
+  style: ChartStylePlan,
+): Promise<void> {
+  if (!style.showTitle) {
+    try {
+      chart.title.text = "";
+      await context.sync();
+    } catch {
+      // Continue with the visibility write below.
+    }
+  }
+
+  try {
+    // This must be the last title write. Assigning title.text can make Excel
+    // recreate the default title placeholder on Mac.
+    chart.title.visible = style.showTitle;
+    await context.sync();
+  } catch {
+    // The chart remains usable even if its host does not expose this setting.
+  }
+
+  try {
+    chart.dataLabels.showValue = style.showDataLabels;
+    await context.sync();
+  } catch {
+    // The chart remains usable even if its host does not expose this setting.
   }
 }
 
@@ -331,16 +379,19 @@ function applyChartFont(font: Excel.ChartFont, size: number): void {
 function applyAxisStyle(
   axis: Excel.ChartAxis,
   position: "Minimum" | "Automatic",
+  tickMark: "Outside" | "None",
   numberFormat: string | undefined,
   style: ChartStylePlan,
 ): void {
   axis.visible = true;
   axis.position = position;
-  axis.majorTickMark = "Outside";
+  axis.majorTickMark = tickMark;
   axis.tickLabelPosition = "NextToAxis";
   axis.title.visible = false;
   axis.majorGridlines.visible = style.showGridlines;
   axis.minorGridlines.visible = false;
+  axis.format.line.color = "#BFBFBF";
+  axis.format.line.weight = 0.75;
   applyChartFont(axis.format.font, style.textSizePoints);
   if (numberFormat !== undefined) {
     axis.numberFormat = numberFormat;

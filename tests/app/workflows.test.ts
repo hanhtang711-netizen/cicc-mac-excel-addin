@@ -71,7 +71,7 @@ describe("chart workflows", () => {
       ],
     });
     expect(style).toMatchObject({
-      seriesColors: ["#640000", "#8A2626"],
+      seriesColors: ["#640000", "#B9B8A6"],
       categoryAxisNumberFormat: "yyyy-mm-dd",
       warnings: [],
     });
@@ -172,7 +172,7 @@ describe("chart workflows", () => {
 
     expect(result.warnings).toEqual(["series_palette_reused"]);
     expect(gateway.createChart.mock.calls[0][1].seriesColors).toEqual([
-      "#640000", "#8A2626", "#3D889A", "#646C86", "#BE995D", "#DD965D", "#640000", "#8A2626",
+      "#640000", "#B9B8A6", "#3D889A", "#BE995D", "#646C86", "#DD965D", "#44546A", "#640000",
     ]);
   });
 

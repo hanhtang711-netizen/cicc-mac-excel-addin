@@ -218,6 +218,8 @@ describe("ExcelGateway.createChart", () => {
     expect(fake.valueAxis.minorGridlines.visible).toBe(false);
     expect(fake.categoryAxis.format.font).toMatchObject({ name: "Arial", size: 8, color: "#000000" });
     expect(fake.valueAxis.format.font).toMatchObject({ name: "Arial", size: 8, color: "#000000" });
+    expect(fake.categoryAxis.format.line).toMatchObject({ color: "#BFBFBF", weight: 0.75 });
+    expect(fake.valueAxis.format.line).toMatchObject({ color: "#BFBFBF", weight: 0.75 });
   });
 
   it("styles line series without touching the unsupported Mac series fill", async () => {
@@ -236,14 +238,14 @@ describe("ExcelGateway.createChart", () => {
     expect(fake.series[0].markerStyle).toBe("None");
   });
 
-  it("fills column series and removes their outlines", async () => {
+  it("fills column series without relying on unsupported outline clearing", async () => {
     const fake = makeChartHarness();
     stubExcel(fake.context);
 
     await new ExcelGateway().createChart(plan, { ...style, seriesStyle: "fill-no-border" });
 
     expect(fake.series[0].format.fill.setSolidColor).toHaveBeenCalledWith("#640000");
-    expect(fake.series[0].format.line.clear).toHaveBeenCalledOnce();
+    expect(fake.series[0].format.line.clear).not.toHaveBeenCalled();
   });
 
   it("places a chart below the source range when requested", async () => {
@@ -297,7 +299,7 @@ describe("ExcelGateway.createChart", () => {
     }, { ...style, seriesColors: ["#640000"] });
 
     expect(fake.points[0].format.fill.setSolidColor).toHaveBeenCalledWith("#640000");
-    expect(fake.points[1].format.fill.setSolidColor).toHaveBeenCalledWith("#8A2626");
+    expect(fake.points[1].format.fill.setSolidColor).toHaveBeenCalledWith("#B9B8A6");
   });
 
   it("does not access axes that a pie chart does not expose", async () => {
@@ -317,24 +319,19 @@ describe("ExcelGateway.createChart", () => {
     }, style)).resolves.toBeUndefined();
   });
 
-  it("deletes a newly-created chart before rethrowing a typed runtime error", async () => {
+  it("keeps a newly-created chart when an optional common style fails", async () => {
     const fake = makeChartHarness();
     fake.chart.format.fill.setSolidColor.mockImplementation(() => {
       throw new Error("styling failed");
     });
     stubExcel(fake.context);
 
-    const error = await new ExcelGateway().createChart(plan, style).catch((caught: unknown) => caught);
+    await expect(new ExcelGateway().createChart(plan, style)).resolves.toBeUndefined();
 
-    expect(fake.chart.delete).toHaveBeenCalledOnce();
-    expect(fake.sync.mock.invocationCallOrder.at(-1)).toBeGreaterThan(
-      fake.chart.delete.mock.invocationCallOrder[0],
-    );
-    expect(error).toBeInstanceOf(AddinError);
-    expect(error).toMatchObject({ code: "excel_runtime_error" });
+    expect(fake.chart.delete).not.toHaveBeenCalled();
   });
 
-  it("preserves the failing series-style stage while rolling back the chart", async () => {
+  it("keeps a newly-created chart when a series-style request is unsupported", async () => {
     const fake = makeChartHarness();
     const cause = new Error("series fill failed");
     fake.series[0].format.fill.setSolidColor.mockImplementation(() => {
@@ -342,14 +339,9 @@ describe("ExcelGateway.createChart", () => {
     });
     stubExcel(fake.context);
 
-    const error = await new ExcelGateway().createChart(plan, style).catch((caught: unknown) => caught);
+    await expect(new ExcelGateway().createChart(plan, style)).resolves.toBeUndefined();
 
-    expect(fake.chart.delete).toHaveBeenCalledOnce();
-    expect(error).toBeInstanceOf(AddinError);
-    expect(error).toMatchObject({
-      code: "excel_runtime_error",
-      details: { stage: "series-style", cause },
-    });
+    expect(fake.chart.delete).not.toHaveBeenCalled();
   });
 });
 
@@ -525,7 +517,7 @@ function makeChartHarness(name = "Data") {
     tickLabelPosition: "",
     numberFormat: "",
     title: { visible: true },
-    format: { font: { name: "", size: 0, color: "" } },
+    format: { font: { name: "", size: 0, color: "" }, line: { color: "", weight: 0 } },
     majorGridlines: { visible: true, format: { line: { color: "" } } },
     minorGridlines: { visible: true, format: { line: { color: "" } } },
   };
@@ -536,7 +528,7 @@ function makeChartHarness(name = "Data") {
     tickLabelPosition: "",
     numberFormat: "",
     title: { visible: true },
-    format: { font: { name: "", size: 0, color: "" } },
+    format: { font: { name: "", size: 0, color: "" }, line: { color: "", weight: 0 } },
     majorGridlines: { visible: true, format: { line: { color: "" } } },
     minorGridlines: { visible: true, format: { line: { color: "" } } },
   };
