@@ -2,36 +2,12 @@ import { CHART_CATALOG } from "../charts/chartCatalog";
 import { AddinError } from "../core/errors";
 import type { ChartKind, ChartOptions } from "../core/types";
 
-const sizePresets = ["small", "medium", "large", "custom"] as const;
-const legendPositions = ["bottom", "top", "left", "right", "none"] as const;
-const orientations = ["columns", "rows"] as const;
+const orientations = ["auto", "columns", "rows"] as const;
 
 export function readAdvancedOptions(form: HTMLFormElement): { kind: ChartKind; options: ChartOptions } {
   const kind = approvedChartKind(valueOf(form, "kind"));
-  const sizePreset = approvedValue(valueOf(form, "sizePreset"), sizePresets, "invalid_size_preset");
-  const legendPosition = approvedValue(valueOf(form, "legendPosition"), legendPositions, "invalid_legend_position");
   const orientation = approvedValue(valueOf(form, "orientation"), orientations, "invalid_orientation");
-  const title = valueOf(form, "title").trim();
-  const options: ChartOptions = {
-    title: title || undefined,
-    sizePreset,
-    legendPosition,
-    orientation,
-    showDataLabels: checked(form, "showDataLabels"),
-    ...(kind === "scatterTrend" ? { addTrendline: checked(form, "addTrendline") } : {}),
-  };
-
-  if (sizePreset === "custom") {
-    const widthCm = Number(valueOf(form, "widthCm"));
-    const heightCm = Number(valueOf(form, "heightCm"));
-    if (!Number.isFinite(widthCm) || widthCm <= 0 || !Number.isFinite(heightCm) || heightCm <= 0) {
-      throw unsupportedLayout("invalid_custom_size");
-    }
-    options.widthCm = widthCm;
-    options.heightCm = heightCm;
-  }
-
-  return { kind, options };
+  return { kind, options: { orientation } };
 }
 
 function valueOf(form: HTMLFormElement, name: string): string {
@@ -40,14 +16,6 @@ function valueOf(form: HTMLFormElement, name: string): string {
     throw unsupportedLayout(`missing_${name}`);
   }
   return element.value;
-}
-
-function checked(form: HTMLFormElement, name: string): boolean {
-  const element = form.elements.namedItem(name);
-  if (!(element instanceof HTMLInputElement) || element.type !== "checkbox") {
-    throw unsupportedLayout(`missing_${name}`);
-  }
-  return element.checked;
 }
 
 function approvedChartKind(value: string): ChartKind {

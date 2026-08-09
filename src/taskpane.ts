@@ -16,27 +16,12 @@ export function initializeAdvancedChartPane(chartService: ChartCreator): void {
   }
 
   const kind = input(form, "kind", HTMLSelectElement);
-  const sizePreset = input(form, "sizePreset", HTMLSelectElement);
-  const customSizeFields = document.querySelector<HTMLElement>("#custom-size-fields");
-  const trendlineField = document.querySelector<HTMLElement>("#trendline-field");
-  const trendline = input(form, "addTrendline", HTMLInputElement);
-  if (kind === null || sizePreset === null || customSizeFields === null || trendlineField === null || trendline === null) {
+  if (kind === null) {
     setStatus(status, "error", "高级图表窗格未能初始化，请关闭后重新打开。");
     return;
   }
 
   populateChartKinds(kind);
-  const updateConditionalFields = (): void => {
-    customSizeFields.hidden = sizePreset.value !== "custom";
-    const isScatter = kind.value === "scatterTrend";
-    trendlineField.hidden = !isScatter;
-    if (!isScatter) {
-      trendline.checked = false;
-    }
-  };
-  sizePreset.addEventListener("change", updateConditionalFields);
-  kind.addEventListener("change", updateConditionalFields);
-  updateConditionalFields();
   controls.disabled = false;
 
   form.addEventListener("submit", async (event) => {

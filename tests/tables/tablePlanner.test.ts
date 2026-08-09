@@ -36,12 +36,15 @@ describe("table plans", () => {
         fill: "#8A2626",
         fontColor: "#FFFFFF",
         bold: true,
-        fontSize: 10.5,
-        horizontalAlignment: "center",
+        fontSize: 8,
       },
-      body: { fill: "#FFFFFF", fontColor: "#000000", bold: false, fontSize: 10.5 },
-      border: { color: "#D9D9D9", style: "continuous", weight: "thin" },
-      columnAlignments: ["center", "right", "right"],
+      body: { fill: "#FFFFFF", fontColor: "#000000", bold: false, fontSize: 8 },
+      horizontalAlignment: "left",
+      verticalAlignment: "center",
+      wrapText: true,
+      rowHeight: 16,
+      clearBorders: true,
+      hideWorksheetGridlines: true,
       preserve: ["values", "formulas", "numberFormats", "merges", "conditionalFormats"],
     });
     expect(plan.rowFills).toEqual([]);
@@ -55,9 +58,9 @@ describe("table plans", () => {
       worksheetName: "Data",
       address: "'Data'!$A$1:$C$4",
       rowFills: [
-        { rowOffset: 1, fill: "#FFFFFF" },
-        { rowOffset: 2, fill: "#F5F5F5" },
-        { rowOffset: 3, fill: "#FFFFFF" },
+        { rowOffset: 1, fill: "#F5F5F5" },
+        { rowOffset: 2, fill: "#FFFFFF" },
+        { rowOffset: 3, fill: "#F5F5F5" },
       ],
       preserve: [
         "values",
@@ -82,12 +85,12 @@ describe("table plans", () => {
     });
 
     expect(plan.rowFills).toEqual([
-      { rowOffset: 0, fill: "#FFFFFF" },
-      { rowOffset: 1, fill: "#F5F5F5" },
+      { rowOffset: 0, fill: "#F5F5F5" },
+      { rowOffset: 1, fill: "#FFFFFF" },
     ]);
   });
 
-  it("keeps a USD-formatted numeric column right-aligned", () => {
+  it("keeps every column left-aligned regardless of number format", () => {
     const plan = buildStandardTablePlan({
       ...selectionSnapshot,
       columnCount: 2,
@@ -101,6 +104,6 @@ describe("table plans", () => {
       rowCount: 3,
     });
 
-    expect(plan.columnAlignments).toEqual(["center", "right"]);
+    expect(plan.horizontalAlignment).toBe("left");
   });
 });

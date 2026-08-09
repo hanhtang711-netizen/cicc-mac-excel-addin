@@ -47,7 +47,7 @@ describe("TableService", () => {
     expect(gateway.applyTablePlan).toHaveBeenCalledOnce();
     expect(gateway.applyTablePlan).toHaveBeenCalledWith(expect.objectContaining({
       kind: "zebra",
-      rowFills: expect.arrayContaining([{ rowOffset: 1, fill: "#FFFFFF" }]),
+      rowFills: expect.arrayContaining([{ rowOffset: 1, fill: "#F5F5F5" }]),
     }));
   });
 

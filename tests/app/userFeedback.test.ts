@@ -30,12 +30,6 @@ describe("user feedback", () => {
     );
   });
 
-  it("keeps the invalid custom-size correction in the shared error mapping", () => {
-    expect(messageForError(new AddinError("unsupported_layout", { reason: "invalid_custom_size" }))).toBe(
-      "请填写有效的自定义宽度和高度（大于 0 的厘米数）。",
-    );
-  });
-
   it("explains palette reuse as a non-blocking warning", () => {
     expect(messageForWarning("series_palette_reused")).toBe(
       "图表已生成。系列超过六个，后续系列将循环使用中金配色。",

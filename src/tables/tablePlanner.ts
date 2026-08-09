@@ -1,9 +1,7 @@
 import { getCellKind } from "../core/selectionParser";
 import type {
-  CellKind,
   SelectionSnapshot,
   StandardTableFormatPlan,
-  TableHorizontalAlignment,
   ZebraTableFormatPlan,
 } from "../core/types";
 
@@ -21,12 +19,15 @@ export function buildStandardTablePlan(snapshot: SelectionSnapshot): StandardTab
       fill: "#8A2626",
       fontColor: "#FFFFFF",
       bold: true,
-      fontSize: 10.5,
-      horizontalAlignment: "center",
+      fontSize: 8,
     },
-    body: { fill: "#FFFFFF", fontColor: "#000000", bold: false, fontSize: 10.5 },
-    columnAlignments: Array.from({ length: snapshot.columnCount }, (_, column) => columnAlignment(snapshot, column)),
-    border: { color: "#D9D9D9", style: "continuous", weight: "thin" },
+    body: { fill: "#FFFFFF", fontColor: "#000000", bold: false, fontSize: 8 },
+    horizontalAlignment: "left",
+    verticalAlignment: "center",
+    wrapText: true,
+    rowHeight: 16,
+    clearBorders: true,
+    hideWorksheetGridlines: true,
     rowFills: [],
     preserve: [...STANDARD_PRESERVE],
   };
@@ -36,7 +37,7 @@ export function buildZebraPlan(snapshot: SelectionSnapshot): ZebraTableFormatPla
   const firstDataRow = hasHeader(snapshot) ? 1 : 0;
   const rowFills = Array.from({ length: Math.max(snapshot.rowCount - firstDataRow, 0) }, (_, index) => ({
     rowOffset: firstDataRow + index,
-    fill: index % 2 === 0 ? "#FFFFFF" : "#F5F5F5",
+    fill: index % 2 === 0 ? "#F5F5F5" : "#FFFFFF",
   } as const));
 
   return {
@@ -48,17 +49,6 @@ export function buildZebraPlan(snapshot: SelectionSnapshot): ZebraTableFormatPla
     rowFills,
     preserve: [...ZEBRA_PRESERVE],
   };
-}
-
-function columnAlignment(snapshot: SelectionSnapshot, column: number): TableHorizontalAlignment {
-  const kinds = dataCellKinds(snapshot, column);
-  if (kinds.length > 0 && kinds.every((kind) => kind === "date")) {
-    return "center";
-  }
-  if (kinds.length > 0 && kinds.every((kind) => kind === "number")) {
-    return "right";
-  }
-  return "left";
 }
 
 function hasHeader(snapshot: SelectionSnapshot): boolean {
@@ -77,11 +67,4 @@ function hasHeader(snapshot: SelectionSnapshot): boolean {
   );
 
   return hasTextMajority && hasFollowingData;
-}
-
-function dataCellKinds(snapshot: SelectionSnapshot, column: number): CellKind[] {
-  return snapshot.values.slice(1)
-    .map((row, rowOffset) =>
-      getCellKind(row[column], snapshot.texts[rowOffset + 1][column], snapshot.numberFormats[rowOffset + 1][column]))
-    .filter((kind) => kind !== "blank");
 }

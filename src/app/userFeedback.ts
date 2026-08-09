@@ -20,9 +20,6 @@ export type AddinWarningCode = keyof typeof WARNING_MESSAGES;
 type FeedbackCode = AddinErrorCode | AddinWarningCode;
 
 export function messageForError(error: unknown): string {
-  if (hasInvalidCustomSize(error)) {
-    return "请填写有效的自定义宽度和高度（大于 0 的厘米数）。";
-  }
   return ERROR_MESSAGES[errorCodeFor(error)];
 }
 
@@ -69,16 +66,4 @@ function errorCodeFor(error: unknown): AddinErrorCode {
 
 function isWarningCode(code: string): code is AddinWarningCode {
   return Object.hasOwn(WARNING_MESSAGES, code);
-}
-
-function hasInvalidCustomSize(error: unknown): boolean {
-  if (typeof error !== "object" || error === null || !("code" in error) || !("details" in error)) {
-    return false;
-  }
-  const details = error.details;
-  return error.code === "unsupported_layout" &&
-    typeof details === "object" &&
-    details !== null &&
-    "reason" in details &&
-    details.reason === "invalid_custom_size";
 }
