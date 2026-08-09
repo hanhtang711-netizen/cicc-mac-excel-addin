@@ -40,7 +40,6 @@ export function buildChartStylePlan(input: ChartStyleInput): ChartStylePlan {
     lineWidthPoints: LINE_WIDTH_POINTS,
     smoothLines: input.kind === "line" || input.kind === "lineMarkers" || input.kind === "lineStacked",
     textSizePoints: AXIS_SIZE_POINTS,
-    majorGridlineColor: WHITE,
     valueAxisNumberFormat: resolveValueAxisNumberFormat(input.sourceFormat),
     categoryAxisNumberFormat: resolveCategoryAxisNumberFormat(input.categoryFormat),
     warnings: input.seriesCount > CICC_SERIES_COLORS.length ? ["series_palette_reused"] : [],

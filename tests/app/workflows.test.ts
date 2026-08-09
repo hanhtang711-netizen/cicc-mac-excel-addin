@@ -93,14 +93,7 @@ describe("chart workflows", () => {
   it("ignores legacy visual overrides and applies the fixed Skill style", async () => {
     const gateway = createFixtureGateway(titleRowFixture);
 
-    await new ChartService(gateway, supportedCapabilities).create("lineMarkers", {
-      title: "Override",
-      sizePreset: "custom",
-      widthCm: 14,
-      heightCm: 8,
-      legendPosition: "top",
-      showDataLabels: true,
-    });
+    await new ChartService(gateway, supportedCapabilities).create("lineMarkers", { orientation: "columns" });
 
     const [plan, style] = gateway.createChart.mock.calls[0];
     expect(plan).toMatchObject({
@@ -206,6 +199,11 @@ describe("table workflows", () => {
       kind: "standard",
       header: { fill: "#8A2626", fontColor: "#FFFFFF" },
       body: { fill: "#FFFFFF" },
+      horizontalAlignment: "left",
+      verticalAlignment: "center",
+      rowHeight: 16,
+      clearBorders: true,
+      hideWorksheetGridlines: true,
       rowFills: [],
       preserve: ["values", "formulas", "numberFormats", "merges", "conditionalFormats"],
     });
@@ -216,9 +214,9 @@ describe("table workflows", () => {
       rowCount: 4,
       columnCount: 3,
       rowFills: [
-        { rowOffset: 1, fill: "#FFFFFF" },
-        { rowOffset: 2, fill: "#F5F5F5" },
-        { rowOffset: 3, fill: "#FFFFFF" },
+        { rowOffset: 1, fill: "#F5F5F5" },
+        { rowOffset: 2, fill: "#FFFFFF" },
+        { rowOffset: 3, fill: "#F5F5F5" },
       ],
       preserve: ["values", "formulas", "numberFormats", "merges", "conditionalFormats", "fonts", "borders", "alignment"],
     });

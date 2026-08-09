@@ -5,9 +5,10 @@ import type {
   StandardTableFormatPlan,
   SelectionSnapshot,
   TableFormatPlan,
-  TableHorizontalAlignment,
 } from "../core/types";
 import { CICC_SERIES_COLORS } from "../charts/chartStyle";
+
+type ChartWriteStage = "create" | "series-style" | "common-style" | "final-sync";
 
 export class ExcelGateway {
   async readSelection(): Promise<SelectionSnapshot> {
@@ -34,11 +35,11 @@ export class ExcelGateway {
     await Excel.run(async (context) => {
       const worksheet = context.workbook.worksheets.getItem(plan.worksheetName);
       const sourceRange = worksheet.getRange(localAddress(plan.sourceAddress));
-      sourceRange.load("left,top,width,height");
-      await context.sync();
-
       let chart: Excel.Chart | undefined;
+      let stage: ChartWriteStage = "create";
       try {
+        sourceRange.load("left,top,width,height");
+        await context.sync();
         chart = worksheet.charts.add(
           resolveChartType(plan.excelType),
           sourceRange,
@@ -48,6 +49,7 @@ export class ExcelGateway {
         chart.series.load("items");
         await context.sync();
 
+        stage = "series-style";
         if (plan.kind === "scatterTrend") {
           for (const existingSeries of chart.series.items) {
             existingSeries.delete();
@@ -61,18 +63,25 @@ export class ExcelGateway {
           await colorPiePoints(context, chart);
         }
 
+        stage = "common-style";
         applyChartStyle(chart, plan, style, sourceRange);
+        stage = "final-sync";
         await context.sync();
       } catch (cause) {
+        const failureStage = stage;
         if (chart !== undefined) {
           try {
             chart.delete();
             await context.sync();
           } catch (rollbackError) {
-            throw new AddinError("excel_runtime_error", { cause, rollbackError });
+            throw new AddinError("excel_runtime_error", {
+              stage: failureStage,
+              cause,
+              rollbackError,
+            });
           }
         }
-        throw new AddinError("excel_runtime_error", cause);
+        throw new AddinError("excel_runtime_error", { stage: failureStage, cause });
       }
     });
   }
@@ -89,6 +98,9 @@ export class ExcelGateway {
       }
 
       applyStandardFormats(range, plan);
+      if (plan.hideWorksheetGridlines) {
+        worksheet.showGridlines = false;
+      }
       await autofitWithinBounds(context, range, plan);
     });
   }
@@ -163,34 +175,24 @@ function applyStandardFormats(range: Excel.Range, plan: StandardTableFormatPlan)
   range.format.font.bold = plan.body.bold;
   range.format.font.size = plan.body.fontSize;
 
-  plan.columnAlignments.forEach((alignment, column) => {
-    range.getColumn(column).format.horizontalAlignment = excelAlignment(alignment);
-  });
-  applyBorders(range, plan);
+  range.format.horizontalAlignment = "Left";
+  range.format.verticalAlignment = "Center";
+  range.format.wrapText = plan.wrapText;
+  range.format.rowHeight = plan.rowHeight;
+  clearBorders(range);
 
   const header = range.getRow(0);
   header.format.fill.color = plan.header.fill;
   header.format.font.color = plan.header.fontColor;
   header.format.font.bold = plan.header.bold;
   header.format.font.size = plan.header.fontSize;
-  header.format.horizontalAlignment = excelAlignment(plan.header.horizontalAlignment);
 }
 
-function excelAlignment(alignment: TableHorizontalAlignment): "Left" | "Center" | "Right" {
-  switch (alignment) {
-    case "left": return "Left";
-    case "center": return "Center";
-    case "right": return "Right";
-  }
-}
-
-function applyBorders(range: Excel.Range, plan: StandardTableFormatPlan): void {
+function clearBorders(range: Excel.Range): void {
   const borderIndexes = ["EdgeTop", "EdgeBottom", "EdgeLeft", "EdgeRight", "InsideVertical", "InsideHorizontal"] as const;
   borderIndexes.forEach((index) => {
     const border = range.format.borders.getItem(index);
-    border.color = plan.border.color;
-    border.style = "Continuous";
-    border.weight = "Thin";
+    border.style = "None";
   });
 }
 
@@ -200,26 +202,15 @@ async function autofitWithinBounds(
   plan: StandardTableFormatPlan,
 ): Promise<void> {
   const columns = Array.from({ length: plan.columnCount }, (_, index) => range.getColumn(index).format);
-  const rows = Array.from({ length: plan.rowCount }, (_, index) => range.getRow(index).format);
-
   columns.forEach((format) => {
     format.autofitColumns();
     format.load("columnWidth");
-  });
-  rows.forEach((format) => {
-    format.autofitRows();
-    format.load("rowHeight");
   });
   await context.sync();
 
   columns.forEach((format) => {
     if (format.columnWidth > 180) {
       format.columnWidth = 180;
-    }
-  });
-  rows.forEach((format) => {
-    if (format.rowHeight > 45) {
-      format.rowHeight = 45;
     }
   });
   await context.sync();
@@ -302,6 +293,7 @@ function applyChartStyle(
   chart.legend.visible = style.legendPosition !== "none";
   if (style.legendPosition !== "none") {
     chart.legend.position = resolveLegendPosition(style.legendPosition);
+    chart.legend.overlay = style.legendOverlay;
   }
 
   chart.dataLabels.showValue = style.showDataLabels;
@@ -310,21 +302,48 @@ function applyChartStyle(
   if (!style.showOuterBorder) {
     chart.format.border.clear();
   }
-  chart.format.font.size = style.textSizePoints;
-  chart.title.format.font.size = style.textSizePoints;
-  chart.legend.format.font.size = style.textSizePoints;
-  chart.dataLabels.format.font.size = style.textSizePoints;
+  applyChartFont(chart.format.font, style.textSizePoints);
+  applyChartFont(chart.title.format.font, style.textSizePoints);
+  applyChartFont(chart.legend.format.font, style.legendFontSizePoints);
+  applyChartFont(chart.dataLabels.format.font, style.textSizePoints);
   if (plan.kind !== "pie" && plan.kind !== "pieExploded") {
-    chart.axes.categoryAxis.format.font.size = style.textSizePoints;
-    chart.axes.valueAxis.format.font.size = style.textSizePoints;
-    chart.axes.valueAxis.majorGridlines.format.line.color = style.majorGridlineColor;
+    applyAxisStyle(
+      chart.axes.categoryAxis,
+      "Minimum",
+      style.categoryAxisNumberFormat,
+      style,
+    );
+    applyAxisStyle(
+      chart.axes.valueAxis,
+      "Automatic",
+      style.valueAxisNumberFormat,
+      style,
+    );
+  }
+}
 
-    if (style.valueAxisNumberFormat !== undefined) {
-      chart.axes.valueAxis.numberFormat = style.valueAxisNumberFormat;
-    }
-    if (style.categoryAxisNumberFormat !== undefined) {
-      chart.axes.categoryAxis.numberFormat = style.categoryAxisNumberFormat;
-    }
+function applyChartFont(font: Excel.ChartFont, size: number): void {
+  font.name = "Arial";
+  font.size = size;
+  font.color = "#000000";
+}
+
+function applyAxisStyle(
+  axis: Excel.ChartAxis,
+  position: "Minimum" | "Automatic",
+  numberFormat: string | undefined,
+  style: ChartStylePlan,
+): void {
+  axis.visible = true;
+  axis.position = position;
+  axis.majorTickMark = "Outside";
+  axis.tickLabelPosition = "NextToAxis";
+  axis.title.visible = false;
+  axis.majorGridlines.visible = style.showGridlines;
+  axis.minorGridlines.visible = false;
+  applyChartFont(axis.format.font, style.textSizePoints);
+  if (numberFormat !== undefined) {
+    axis.numberFormat = numberFormat;
   }
 }
 

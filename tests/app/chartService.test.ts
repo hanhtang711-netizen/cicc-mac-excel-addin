@@ -40,7 +40,7 @@ describe("ChartService", () => {
     };
     const service = new ChartService(gateway, supportedCapabilities);
 
-    const result = await service.create("column", { title: "Margins" });
+    const result = await service.create("column");
 
     expect(result).toEqual({ ok: true, warnings: [] });
     expect(gateway.createChart).toHaveBeenCalledOnce();
@@ -48,7 +48,6 @@ describe("ChartService", () => {
       expect.objectContaining({
         kind: "column",
         excelType: "columnClustered",
-        title: "Margins",
         sourceAddress: "Data!A1:C4",
       }),
       expect.objectContaining({
@@ -127,23 +126,6 @@ describe("ChartService", () => {
     expect(gateway.createChart).not.toHaveBeenCalled();
   });
 
-  it("creates scatter without a trendline when only trendlines are unsupported", async () => {
-    const gateway = makeGateway();
-    const service = new ChartService(gateway, {
-      ...supportedCapabilities,
-      trendlines: false,
-    });
-
-    await expect(service.create("scatterTrend", { addTrendline: false })).resolves.toEqual({
-      ok: true,
-      warnings: [],
-    });
-    expect(gateway.readSelection).toHaveBeenCalledOnce();
-    expect(gateway.createChart).toHaveBeenCalledWith(
-      expect.objectContaining({ addLinearTrendline: false }),
-      expect.any(Object),
-    );
-  });
 });
 
 function makeGateway() {

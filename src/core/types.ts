@@ -13,8 +13,6 @@ export type ChartKind =
   | "columnStacked100"
   | "lineStacked";
 
-export type ChartSizePreset = "small" | "medium" | "large" | "custom";
-
 export type LegendPosition = "bottom" | "top" | "left" | "right" | "none";
 
 export type CellKind = "blank" | "text" | "number" | "date" | "error";
@@ -52,14 +50,7 @@ export interface ParsedSelection {
 }
 
 export interface ChartOptions {
-  title?: string;
-  sizePreset?: ChartSizePreset;
-  widthCm?: number;
-  heightCm?: number;
-  legendPosition?: LegendPosition;
   orientation?: SeriesOrientationMode;
-  showDataLabels?: boolean;
-  addTrendline?: boolean;
 }
 
 export interface ChartSeriesPlan {
@@ -112,7 +103,6 @@ export interface ChartStylePlan {
   lineWidthPoints: number;
   smoothLines: boolean;
   textSizePoints: number;
-  majorGridlineColor: string;
   valueAxisNumberFormat: string | undefined;
   categoryAxisNumberFormat: string | undefined;
   warnings: string[];
@@ -129,19 +119,11 @@ export type TablePreservedProperty =
   | "borders"
   | "alignment";
 
-export type TableHorizontalAlignment = "left" | "center" | "right";
-
 export interface TableCellFormat {
   fill: string;
   fontColor: string;
   bold: boolean;
   fontSize: number;
-}
-
-export interface TableBorderFormat {
-  color: string;
-  style: "continuous";
-  weight: "thin";
 }
 
 interface TablePlanBase {
@@ -153,10 +135,14 @@ interface TablePlanBase {
 
 export interface StandardTableFormatPlan extends TablePlanBase {
   kind: "standard";
-  header: TableCellFormat & { horizontalAlignment: "center" };
+  header: TableCellFormat;
   body: TableCellFormat;
-  columnAlignments: TableHorizontalAlignment[];
-  border: TableBorderFormat;
+  horizontalAlignment: "left";
+  verticalAlignment: "center";
+  wrapText: true;
+  rowHeight: 16;
+  clearBorders: true;
+  hideWorksheetGridlines: true;
   rowFills: [];
   preserve: Array<Exclude<TablePreservedProperty, "fonts" | "borders" | "alignment">>;
 }

@@ -35,7 +35,6 @@ const style: ChartStylePlan = {
   lineWidthPoints: 1.5,
   smoothLines: false,
   textSizePoints: 8,
-  majorGridlineColor: "#FFFFFF",
   valueAxisNumberFormat: "0.0%",
   categoryAxisNumberFormat: "yyyy-mm-dd",
   warnings: [],
@@ -186,7 +185,39 @@ describe("ExcelGateway.createChart", () => {
     expect(fake.chart.dataLabels.showValue).toBe(false);
     expect(fake.valueAxis.numberFormat).toBe("0.0%");
     expect(fake.categoryAxis.numberFormat).toBe("yyyy-mm-dd");
-    expect(fake.valueAxis.majorGridlines.format.line.color).toBe("#FFFFFF");
+    expect(fake.valueAxis.majorGridlines.visible).toBe(false);
+  });
+
+  it("applies the strict common legend, axis, and gridline contract", async () => {
+    const fake = makeChartHarness();
+    stubExcel(fake.context);
+
+    await new ExcelGateway().createChart(plan, style);
+
+    expect(fake.chart.title.visible).toBe(false);
+    expect(fake.chart.dataLabels.showValue).toBe(false);
+    expect(fake.chart.legend).toMatchObject({
+      visible: true,
+      position: "Bottom",
+      overlay: false,
+    });
+    expect(fake.chart.legend.format.font).toMatchObject({
+      name: "Arial",
+      size: 9,
+      color: "#000000",
+    });
+    expect(fake.categoryAxis).toMatchObject({
+      visible: true,
+      position: "Minimum",
+      majorTickMark: "Outside",
+      tickLabelPosition: "NextToAxis",
+    });
+    expect(fake.categoryAxis.title.visible).toBe(false);
+    expect(fake.valueAxis.title.visible).toBe(false);
+    expect(fake.valueAxis.majorGridlines.visible).toBe(false);
+    expect(fake.valueAxis.minorGridlines.visible).toBe(false);
+    expect(fake.categoryAxis.format.font).toMatchObject({ name: "Arial", size: 8, color: "#000000" });
+    expect(fake.valueAxis.format.font).toMatchObject({ name: "Arial", size: 8, color: "#000000" });
   });
 
   it("styles line series without touching the unsupported Mac series fill", async () => {
@@ -302,9 +333,93 @@ describe("ExcelGateway.createChart", () => {
     expect(error).toBeInstanceOf(AddinError);
     expect(error).toMatchObject({ code: "excel_runtime_error" });
   });
+
+  it("preserves the failing series-style stage while rolling back the chart", async () => {
+    const fake = makeChartHarness();
+    const cause = new Error("series fill failed");
+    fake.series[0].format.fill.setSolidColor.mockImplementation(() => {
+      throw cause;
+    });
+    stubExcel(fake.context);
+
+    const error = await new ExcelGateway().createChart(plan, style).catch((caught: unknown) => caught);
+
+    expect(fake.chart.delete).toHaveBeenCalledOnce();
+    expect(error).toBeInstanceOf(AddinError);
+    expect(error).toMatchObject({
+      code: "excel_runtime_error",
+      details: { stage: "series-style", cause },
+    });
+  });
 });
 
 describe("ExcelGateway.applyTablePlan", () => {
+  it("applies the strict standard table format and hides worksheet gridlines", async () => {
+    const makeFont = () => ({ color: "", bold: false, size: 0 });
+    const makeFill = () => ({ color: "" });
+    const borders = new Map(
+      ["EdgeTop", "EdgeBottom", "EdgeLeft", "EdgeRight", "InsideVertical", "InsideHorizontal"]
+        .map((index) => [index, { style: "Continuous" }]),
+    );
+    const header = { format: { fill: makeFill(), font: makeFont() } };
+    const columnFormats = Array.from({ length: 3 }, () => ({
+      columnWidth: 200,
+      autofitColumns: vi.fn(),
+      load: vi.fn(),
+    }));
+    const selectedRange = {
+      format: {
+        fill: makeFill(),
+        font: makeFont(),
+        horizontalAlignment: "",
+        verticalAlignment: "",
+        wrapText: false,
+        rowHeight: 0,
+        borders: { getItem: vi.fn((index: string) => borders.get(index)) },
+      },
+      getRow: vi.fn(() => header),
+      getColumn: vi.fn((index: number) => ({ format: columnFormats[index] })),
+    };
+    const worksheet = { showGridlines: true, getRange: vi.fn(() => selectedRange) };
+    const sync = vi.fn().mockResolvedValue(undefined);
+    stubExcel({ workbook: { worksheets: { getItem: vi.fn(() => worksheet) } }, sync });
+
+    await new ExcelGateway().applyTablePlan({
+      kind: "standard",
+      worksheetName: "Data",
+      address: "'Data'!$A$1:$C$4",
+      rowCount: 4,
+      columnCount: 3,
+      header: { fill: "#8A2626", fontColor: "#FFFFFF", bold: true, fontSize: 8 },
+      body: { fill: "#FFFFFF", fontColor: "#000000", bold: false, fontSize: 8 },
+      horizontalAlignment: "left",
+      verticalAlignment: "center",
+      wrapText: true,
+      rowHeight: 16,
+      clearBorders: true,
+      hideWorksheetGridlines: true,
+      rowFills: [],
+      preserve: ["values", "formulas", "numberFormats", "merges", "conditionalFormats"],
+    });
+
+    expect(selectedRange.format).toMatchObject({
+      fill: { color: "#FFFFFF" },
+      font: { color: "#000000", bold: false, size: 8 },
+      horizontalAlignment: "Left",
+      verticalAlignment: "Center",
+      wrapText: true,
+      rowHeight: 16,
+    });
+    expect(header.format).toMatchObject({
+      fill: { color: "#8A2626" },
+      font: { color: "#FFFFFF", bold: true, size: 8 },
+    });
+    expect([...borders.values()].every((border) => border.style === "None")).toBe(true);
+    expect(worksheet.showGridlines).toBe(false);
+    expect(columnFormats.every((format) => format.autofitColumns.mock.calls.length === 1)).toBe(true);
+    expect(columnFormats.every((format) => format.columnWidth === 180)).toBe(true);
+  });
+
   it("applies zebra fills only to rows on the worksheet captured by the plan", async () => {
     const fillWrites: Array<{ row: number; color: string }> = [];
     const unexpectedWrite = vi.fn(() => {
@@ -404,14 +519,26 @@ function makeChartHarness(name = "Data") {
   const defaultSeries = series[0];
   const addedSeries: ReturnType<typeof makeSeries>[] = [];
   const categoryAxis = {
+    visible: false,
+    position: "",
+    majorTickMark: "",
+    tickLabelPosition: "",
     numberFormat: "",
-    format: { font: { size: 0 } },
-    majorGridlines: { format: { line: { color: "" } } },
+    title: { visible: true },
+    format: { font: { name: "", size: 0, color: "" } },
+    majorGridlines: { visible: true, format: { line: { color: "" } } },
+    minorGridlines: { visible: true, format: { line: { color: "" } } },
   };
   const valueAxis = {
+    visible: false,
+    position: "",
+    majorTickMark: "",
+    tickLabelPosition: "",
     numberFormat: "",
-    format: { font: { size: 0 } },
-    majorGridlines: { format: { line: { color: "" } } },
+    title: { visible: true },
+    format: { font: { name: "", size: 0, color: "" } },
+    majorGridlines: { visible: true, format: { line: { color: "" } } },
+    minorGridlines: { visible: true, format: { line: { color: "" } } },
   };
   const chart = {
     width: 0,
@@ -419,13 +546,13 @@ function makeChartHarness(name = "Data") {
     left: 0,
     top: 0,
     delete: vi.fn(),
-    title: { visible: false, text: "", format: { font: { size: 0 } } },
-    legend: { visible: false, position: "", format: { font: { size: 0 } } },
-    dataLabels: { showValue: false, format: { font: { size: 0 } } },
+    title: { visible: false, text: "", format: { font: { name: "", size: 0, color: "" } } },
+    legend: { visible: false, position: "", overlay: true, format: { font: { name: "", size: 0, color: "" } } },
+    dataLabels: { showValue: false, format: { font: { name: "", size: 0, color: "" } } },
     format: {
       fill: makeFill(),
       border: { clear: vi.fn() },
-      font: { size: 0 },
+      font: { name: "", size: 0, color: "" },
     },
     plotArea: { format: { fill: makeFill() } },
     axes: { categoryAxis, valueAxis },

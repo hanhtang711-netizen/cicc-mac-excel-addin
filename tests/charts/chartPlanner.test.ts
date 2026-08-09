@@ -119,14 +119,8 @@ describe("buildChartPlan", () => {
     expect(plan).not.toHaveProperty("heightCm");
   });
 
-  it("allows the advanced pane to disable a scatter trendline", () => {
-    expect(buildChartPlan(parsedSelection, "scatterTrend", { addTrendline: false }).addLinearTrendline).toBe(
-      false,
-    );
-  });
-
   it("does not add a trendline to non-scatter charts", () => {
-    expect(buildChartPlan(parsedSelection, "column", { addTrendline: true }).addLinearTrendline).toBe(false);
+    expect(buildChartPlan(parsedSelection, "column", {}).addLinearTrendline).toBe(false);
   });
 
   it("rejects General-formatted text X values", () => {

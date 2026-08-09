@@ -26,7 +26,7 @@ export function buildChartPlan(
       categoryAddress: parsed.categoryAddress,
       valuesAddress: series.valuesAddress,
     })),
-    addLinearTrendline: kind === "scatterTrend" && options.addTrendline !== false,
+    addLinearTrendline: kind === "scatterTrend",
   };
 }
 

@@ -28,7 +28,7 @@ export class ChartService {
   ) {}
 
   async create(kind: ChartKind, options: ChartOptions = {}): Promise<ServiceResult> {
-    this.assertSupported(kind, options);
+    this.assertSupported(kind);
     const snapshot = await this.gateway.readSelection();
     const parsed = parseSelection(snapshot, options.orientation);
     const plan = buildChartPlan(parsed, kind, options);
@@ -45,10 +45,10 @@ export class ChartService {
     return { ok: true, warnings: style.warnings };
   }
 
-  private assertSupported(kind: ChartKind, options: ChartOptions): void {
+  private assertSupported(kind: ChartKind): void {
     if (!this.capabilities.base ||
       (kind === "pieExploded" && !this.capabilities.explodedPie) ||
-      (kind === "scatterTrend" && options.addTrendline !== false && !this.capabilities.trendlines)) {
+      (kind === "scatterTrend" && !this.capabilities.trendlines)) {
       throw new AddinError("unsupported_api");
     }
   }
