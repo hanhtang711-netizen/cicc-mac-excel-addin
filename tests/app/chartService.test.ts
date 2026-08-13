@@ -36,6 +36,7 @@ describe("ChartService", () => {
   it("reads, parses, plans, and creates one chart", async () => {
     const gateway = {
       readSelection: vi.fn().mockResolvedValue(selectionSnapshot),
+      readRange: vi.fn().mockResolvedValue(selectionSnapshot),
       createChart: vi.fn().mockResolvedValue(undefined),
     };
     const service = new ChartService(gateway, supportedCapabilities);
@@ -69,6 +70,7 @@ describe("ChartService", () => {
         rowCount: 3,
         columnCount: 2,
       }),
+      readRange: vi.fn().mockResolvedValue(selectionSnapshot),
       createChart: vi.fn().mockResolvedValue(undefined),
     };
     const service = new ChartService(gateway, supportedCapabilities);
@@ -131,6 +133,7 @@ describe("ChartService", () => {
 function makeGateway() {
   return {
     readSelection: vi.fn().mockResolvedValue(selectionSnapshot),
+    readRange: vi.fn().mockResolvedValue(selectionSnapshot),
     createChart: vi.fn().mockResolvedValue(undefined),
   };
 }

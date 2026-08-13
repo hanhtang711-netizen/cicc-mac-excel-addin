@@ -1,7 +1,6 @@
 import { ChartService } from "../app/chartService";
 import { messageForError } from "../app/userFeedback";
 import type { ChartKind, ChartOptions } from "../core/types";
-import type { ExcelGateway } from "../office/excelGateway";
 
 /**
  * 全自动桥（agent 驱动）：
@@ -32,17 +31,41 @@ async function report(jobId: string, status: "done" | "error", message: string):
   }
 }
 
-async function runJob(job: BridgeJob, gateway: ExcelGateway, chartService: ChartService): Promise<void> {
+/** 诊断版错误描述：携带 name/code/message/details（Office.js 原始错误），
+ * 兜底 messageForError 的中文提示。details 序列化失败则降级。 */
+function describeError(error: unknown): string {
+  const friendly = messageForError(error);
+  if (typeof error !== "object" || error === null) {
+    return friendly;
+  }
+  const e = error as { name?: string; code?: string; message?: string; details?: unknown };
+  let detail = "";
+  if (e.details !== undefined) {
+    try {
+      detail = JSON.stringify(e.details);
+    } catch {
+      detail = "<unserializable>";
+    }
+  }
+  return `${e.name ?? "Error"}: ${e.message ?? ""} [code=${e.code ?? ""}] [details=${detail}]（${friendly}）`;
+}
+
+async function runJob(job: BridgeJob, chartService: ChartService): Promise<void> {
   try {
-    await gateway.selectRange(job.sheet, job.range);
-    const result = await chartService.create(job.kind, job.options ?? {});
+    // 直读地址出图，不经过"当前选区"（select+读选区有 UI 竞态，260814）
+    const result = await chartService.create(job.kind, job.options ?? {}, {
+      sheet: job.sheet,
+      address: job.range,
+    });
     await report(job.id, "done", result.warnings.join("; "));
   } catch (error) {
-    await report(job.id, "error", messageForError(error));
+    await report(job.id, "error", describeError(error));
   }
 }
 
-export function startAutoRunner(gateway: ExcelGateway, chartService: ChartService): void {
+const sleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
+
+export function startAutoRunner(chartService: ChartService): void {
   let busy = false;
 
   const tick = async (): Promise<void> => {
@@ -60,7 +83,11 @@ export function startAutoRunner(gateway: ExcelGateway, chartService: ChartServic
       }
       busy = true;
       try {
-        await runJob(job, gateway, chartService);
+        await runJob(job, chartService);
+        // 坑位（260814）：Excel Rich API 快速连续批次时，第二个批次的
+        // worksheets.getItem 命中未刷新缓存抛 ItemNotFound（奇偶交替复现）。
+        // 每条指令完成后冷却 1.5s 再取下一条。
+        await sleep(1500);
       } finally {
         busy = false;
       }

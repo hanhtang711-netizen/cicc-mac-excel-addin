@@ -31,14 +31,41 @@ export class ExcelGateway {
     });
   }
 
-  /** 桥接自动执行：激活指定工作表并选中指定范围，供 ChartService 复用当前选区逻辑。 */
-  async selectRange(sheetName: string, address: string): Promise<void> {
-    await Excel.run(async (context) => {
+  /** 桥接自动执行：按工作表名+地址直读快照，不经过"当前选区"。
+   *
+   * 坑位（260814）：select() + 立即读当前选区存在 UI 竞态——select 尚未
+   * 生效时 getSelectedRange() 抛 RichApi ItemNotFound（AMZN 18-sheet 底稿
+   * 复现）。直读 getRange(address) 不依赖选区/激活，无竞态。 */
+  async readRange(sheetName: string, address: string): Promise<SelectionSnapshot> {
+    try {
+      return await this.readRangeOnce(sheetName, address);
+    } catch (cause) {
+      // 坑位（260814）：连续两个 Excel.run 批次时，第二个批次的
+      // worksheets.getItem 会命中 Excel 未刷新的集合缓存抛 ItemNotFound。
+      // 等 1 秒让缓存刷新后重试一次——重试期间 getItem 必然已就绪。
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      try {
+        return await this.readRangeOnce(sheetName, address);
+      } catch (retryCause) {
+        // 诊断包装：两次失败位置与参数一并回报
+        throw new AddinError("excel_runtime_error", {
+          stage: "readRange",
+          sheet: sheetName,
+          address,
+          cause,
+          retryCause,
+        });
+      }
+    }
+  }
+
+  private async readRangeOnce(sheetName: string, address: string): Promise<SelectionSnapshot> {
+    return Excel.run(async (context) => {
       const sheet = context.workbook.worksheets.getItem(sheetName);
-      sheet.activate();
       const range = sheet.getRange(address);
-      range.select();
+      range.load("address,rowIndex,columnIndex,rowCount,columnCount,values,text,numberFormat");
       await context.sync();
+      return snapshotFromRange(sheetName, range);
     });
   }
 

@@ -25,6 +25,7 @@ const supportedCapabilities: AddinCapabilities = {
 
 const createFixtureGateway = (snapshot: SelectionSnapshot) => ({
   readSelection: vi.fn().mockResolvedValue(snapshot),
+  readRange: vi.fn().mockResolvedValue(snapshot),
   createChart: vi.fn<(plan: ChartPlan, style: ChartStylePlan) => Promise<void>>().mockResolvedValue(undefined),
   applyTablePlan: vi.fn<(plan: TableFormatPlan) => Promise<void>>().mockResolvedValue(undefined),
 });

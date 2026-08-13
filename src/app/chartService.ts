@@ -13,7 +13,13 @@ import type { AddinCapabilities } from "../office/capability";
 
 export interface ChartGateway {
   readSelection(): Promise<SelectionSnapshot>;
+  readRange(sheetName: string, address: string): Promise<SelectionSnapshot>;
   createChart(plan: ChartPlan, style: ChartStylePlan): Promise<void>;
+}
+
+export interface ChartTarget {
+  sheet: string;
+  address: string;
 }
 
 export interface ServiceResult {
@@ -27,9 +33,15 @@ export class ChartService {
     private readonly capabilities: AddinCapabilities,
   ) {}
 
-  async create(kind: ChartKind, options: ChartOptions = {}): Promise<ServiceResult> {
+  async create(
+    kind: ChartKind,
+    options: ChartOptions = {},
+    target?: ChartTarget,
+  ): Promise<ServiceResult> {
     this.assertSupported(kind);
-    const snapshot = await this.gateway.readSelection();
+    const snapshot = target === undefined
+      ? await this.gateway.readSelection()
+      : await this.gateway.readRange(target.sheet, target.address);
     const parsed = parseSelection(snapshot, options.orientation);
     const plan = buildChartPlan(parsed, kind, options);
     const style = buildChartStylePlan({
