@@ -1,6 +1,7 @@
 import { readAdvancedOptions } from "./app/advancedOptions";
 import { ChartService, type ServiceResult } from "./app/chartService";
 import { messageForError, messageForWarning } from "./app/userFeedback";
+import { startAutoRunner } from "./bridge/autoRunner";
 import { CHART_CATALOG } from "./charts/chartCatalog";
 import { getCapabilities, type RequirementChecker } from "./office/capability";
 import { ExcelGateway } from "./office/excelGateway";
@@ -76,9 +77,33 @@ function setStatus(status: HTMLElement, state: "loading" | "success" | "warning"
   status.textContent = message;
 }
 
-export function createAdvancedChartService(requirements: RequirementChecker): ChartService {
+export function createAdvancedChartService(
+  requirements: RequirementChecker,
+  gateway?: ExcelGateway,
+): ChartService {
   const capabilities = getCapabilities(requirements);
-  return new ChartService(new ExcelGateway(), capabilities);
+  return new ChartService(gateway ?? new ExcelGateway(), capabilities);
+}
+
+/**
+ * 自动嵌入文档：把当前工作簿标记为 AutoShowTaskpaneWithDocument。
+ * 保存后，该工作簿每次打开都会自动弹出本任务窗格——这是 agent 自动
+ * 唤醒通道（全自动桥）的文档侧地基。幂等，失败仅告警不影响使用。
+ */
+export function ensureAutoShowWithDocument(): void {
+  try {
+    const settings = Office.context.document.settings;
+    if (settings.get("Office.AutoShowTaskpaneWithDocument") !== true) {
+      settings.set("Office.AutoShowTaskpaneWithDocument", true);
+      settings.saveAsync((result) => {
+        if (result.status === Office.AsyncResultStatus.Failed) {
+          console.warn("AutoShowTaskpaneWithDocument 保存失败", result.error);
+        }
+      });
+    }
+  } catch (error) {
+    console.warn("ensureAutoShowWithDocument 失败", error);
+  }
 }
 
 if (typeof Office !== "undefined") {
@@ -90,6 +115,10 @@ if (typeof Office !== "undefined") {
       }
       return;
     }
-    initializeAdvancedChartPane(createAdvancedChartService(Office.context.requirements));
+    ensureAutoShowWithDocument();
+    const gateway = new ExcelGateway();
+    const service = createAdvancedChartService(Office.context.requirements, gateway);
+    initializeAdvancedChartPane(service);
+    startAutoRunner(gateway, service);
   });
 }
