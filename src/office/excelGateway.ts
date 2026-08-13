@@ -31,6 +31,17 @@ export class ExcelGateway {
     });
   }
 
+  /** 桥接自动执行：激活指定工作表并选中指定范围，供 ChartService 复用当前选区逻辑。 */
+  async selectRange(sheetName: string, address: string): Promise<void> {
+    await Excel.run(async (context) => {
+      const sheet = context.workbook.worksheets.getItem(sheetName);
+      sheet.activate();
+      const range = sheet.getRange(address);
+      range.select();
+      await context.sync();
+    });
+  }
+
   async createChart(plan: ChartPlan, style: ChartStylePlan): Promise<void> {
     await Excel.run(async (context) => {
       const worksheet = context.workbook.worksheets.getItem(plan.worksheetName);
@@ -66,7 +77,21 @@ export class ExcelGateway {
             }
             addScatterSeries(worksheet, chart, plan, style);
           } else {
-            applySeriesStyles(chart.series.items, plan, style);
+            // 坑位（260813 实测 Mac Excel 16.112）：charts.add 会把类别列
+            // （columns）或表头行（rows）建成"幽灵系列"——系列数多 1，幽灵
+            // 位于集合末尾，带工作簿主题 accent4 色（默认主题下是紫 #8064A2，
+            // 不属于中金色板）。删除必须走独立 sync 批次：同批次 delete 会让
+            // 剩余系列引用失效，导致整批回滚（260813 第一次修复翻车教训）。
+            let seriesItems = chart.series.items;
+            if (seriesItems.length === plan.series.length + 1) {
+              const ghost = seriesItems[seriesItems.length - 1];
+              ghost.delete();
+              await context.sync();
+              chart.series.load("items");
+              await context.sync();
+              seriesItems = chart.series.items;
+            }
+            applySeriesStyles(seriesItems, plan, style);
           }
 
           if (plan.kind === "pie" || plan.kind === "pieExploded") {
@@ -190,6 +215,9 @@ function applyStandardFormats(range: Excel.Range, plan: StandardTableFormatPlan)
   range.format.font.color = plan.body.fontColor;
   range.format.font.bold = plan.body.bold;
   range.format.font.size = plan.body.fontSize;
+  // Office.js 只有西文字体槽 API（font.name 写 latin）；中文字体槽（ea=黑体）
+  // 由工作簿主题提供——底稿须加载中金配色主题（见 webext_inject 主题注入）。
+  range.format.font.name = "Arial";
 
   range.format.horizontalAlignment = "Left";
   range.format.verticalAlignment = "Center";
@@ -202,6 +230,7 @@ function applyStandardFormats(range: Excel.Range, plan: StandardTableFormatPlan)
   header.format.font.color = plan.header.fontColor;
   header.format.font.bold = plan.header.bold;
   header.format.font.size = plan.header.fontSize;
+  header.format.font.name = "Arial";
 }
 
 function clearBorders(range: Excel.Range): void {
