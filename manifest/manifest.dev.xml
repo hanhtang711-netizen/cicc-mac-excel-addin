@@ -10,11 +10,11 @@
   <DefaultLocale>zh-CN</DefaultLocale>
   <DisplayName DefaultValue="中金工具" />
   <Description DefaultValue="中金 Excel 图表与表格工具" />
-  <IconUrl DefaultValue="https://localhost:3000/assets/icon-32.png" />
-  <HighResolutionIconUrl DefaultValue="https://localhost:3000/assets/icon-80.png" />
-  <SupportUrl DefaultValue="https://localhost:3000/taskpane.html" />
+  <IconUrl DefaultValue="https://localhost:3001/assets/icon-32.png" />
+  <HighResolutionIconUrl DefaultValue="https://localhost:3001/assets/icon-80.png" />
+  <SupportUrl DefaultValue="https://localhost:3001/taskpane.html" />
   <AppDomains>
-    <AppDomain>https://localhost:3000</AppDomain>
+    <AppDomain>https://localhost:3001</AppDomain>
   </AppDomains>
   <Hosts>
     <Host Name="Workbook" />
@@ -25,7 +25,7 @@
     </Sets>
   </Requirements>
   <DefaultSettings>
-    <SourceLocation DefaultValue="https://localhost:3000/taskpane.html" />
+    <SourceLocation DefaultValue="https://localhost:3001/taskpane.html" />
   </DefaultSettings>
   <Permissions>ReadWriteDocument</Permissions>
   <VersionOverrides xmlns="http://schemas.microsoft.com/office/taskpaneappversionoverrides" xsi:type="VersionOverridesV1_0">
@@ -42,70 +42,70 @@
             <CustomTab id="CiccTools.Tab">
               <Group id="CiccCharts.Group">
                 <Label resid="CiccCharts.Group.Label" />
-                <Icon><bt:Image size="16" resid="Icon.16" /><bt:Image size="32" resid="Icon.32" /><bt:Image size="80" resid="Icon.80" /></Icon>
+                <Icon><bt:Image size="16" resid="ChartIcon.16" /><bt:Image size="32" resid="ChartIcon.32" /><bt:Image size="80" resid="ChartIcon.80" /></Icon>
                 <Control xsi:type="Menu" id="CreateChartMenu">
                   <Label resid="Chart.Menu.Lbl" />
                   <Supertip><Title resid="Chart.Menu.Lbl" /><Description resid="Chart.Menu.Desc" /></Supertip>
-                  <Icon><bt:Image size="16" resid="Icon.16" /><bt:Image size="32" resid="Icon.32" /><bt:Image size="80" resid="Icon.80" /></Icon>
+                  <Icon><bt:Image size="16" resid="ChartIcon.16" /><bt:Image size="32" resid="ChartIcon.32" /><bt:Image size="80" resid="ChartIcon.80" /></Icon>
                   <Items>
                     <Item id="CreateColumnChart">
                       <Label resid="Chart.Column.Lbl" />
                       <Supertip><Title resid="Chart.Column.Lbl" /><Description resid="Chart.Column.Desc" /></Supertip>
-                      <Icon><bt:Image size="16" resid="Icon.16" /><bt:Image size="32" resid="Icon.32" /><bt:Image size="80" resid="Icon.80" /></Icon>
+                      <Icon><bt:Image size="16" resid="ChartIcon.16" /><bt:Image size="32" resid="ChartIcon.32" /><bt:Image size="80" resid="ChartIcon.80" /></Icon>
                       <Action xsi:type="ExecuteFunction"><FunctionName>createColumnChart</FunctionName></Action>
                     </Item>
                     <Item id="CreateStackedColumnChart">
                       <Label resid="Chart.StackCol.Lbl" />
                       <Supertip><Title resid="Chart.StackCol.Lbl" /><Description resid="Chart.StackCol.Desc" /></Supertip>
-                      <Icon><bt:Image size="16" resid="Icon.16" /><bt:Image size="32" resid="Icon.32" /><bt:Image size="80" resid="Icon.80" /></Icon>
+                      <Icon><bt:Image size="16" resid="ChartIcon.16" /><bt:Image size="32" resid="ChartIcon.32" /><bt:Image size="80" resid="ChartIcon.80" /></Icon>
                       <Action xsi:type="ExecuteFunction"><FunctionName>createStackedColumnChart</FunctionName></Action>
                     </Item>
                     <Item id="CreateLineChart">
                       <Label resid="Chart.Line.Lbl" />
                       <Supertip><Title resid="Chart.Line.Lbl" /><Description resid="Chart.Line.Desc" /></Supertip>
-                      <Icon><bt:Image size="16" resid="Icon.16" /><bt:Image size="32" resid="Icon.32" /><bt:Image size="80" resid="Icon.80" /></Icon>
+                      <Icon><bt:Image size="16" resid="ChartIcon.16" /><bt:Image size="32" resid="ChartIcon.32" /><bt:Image size="80" resid="ChartIcon.80" /></Icon>
                       <Action xsi:type="ExecuteFunction"><FunctionName>createLineChart</FunctionName></Action>
                     </Item>
                     <Item id="CreateMarkedLineChart">
                       <Label resid="Chart.LineMark.Lbl" />
                       <Supertip><Title resid="Chart.LineMark.Lbl" /><Description resid="Chart.LineMark.Desc" /></Supertip>
-                      <Icon><bt:Image size="16" resid="Icon.16" /><bt:Image size="32" resid="Icon.32" /><bt:Image size="80" resid="Icon.80" /></Icon>
+                      <Icon><bt:Image size="16" resid="ChartIcon.16" /><bt:Image size="32" resid="ChartIcon.32" /><bt:Image size="80" resid="ChartIcon.80" /></Icon>
                       <Action xsi:type="ExecuteFunction"><FunctionName>createMarkedLineChart</FunctionName></Action>
                     </Item>
                     <Item id="CreatePieChart">
                       <Label resid="Chart.Pie.Lbl" />
                       <Supertip><Title resid="Chart.Pie.Lbl" /><Description resid="Chart.Pie.Desc" /></Supertip>
-                      <Icon><bt:Image size="16" resid="Icon.16" /><bt:Image size="32" resid="Icon.32" /><bt:Image size="80" resid="Icon.80" /></Icon>
+                      <Icon><bt:Image size="16" resid="ChartIcon.16" /><bt:Image size="32" resid="ChartIcon.32" /><bt:Image size="80" resid="ChartIcon.80" /></Icon>
                       <Action xsi:type="ExecuteFunction"><FunctionName>createPieChart</FunctionName></Action>
                     </Item>
                     <Item id="CreateBarChart">
                       <Label resid="Chart.Bar.Lbl" />
                       <Supertip><Title resid="Chart.Bar.Lbl" /><Description resid="Chart.Bar.Desc" /></Supertip>
-                      <Icon><bt:Image size="16" resid="Icon.16" /><bt:Image size="32" resid="Icon.32" /><bt:Image size="80" resid="Icon.80" /></Icon>
+                      <Icon><bt:Image size="16" resid="ChartIcon.16" /><bt:Image size="32" resid="ChartIcon.32" /><bt:Image size="80" resid="ChartIcon.80" /></Icon>
                       <Action xsi:type="ExecuteFunction"><FunctionName>createBarChart</FunctionName></Action>
                     </Item>
                     <Item id="CreateScatterTrendChart">
                       <Label resid="Chart.Scatter.Lbl" />
                       <Supertip><Title resid="Chart.Scatter.Lbl" /><Description resid="Chart.Scatter.Desc" /></Supertip>
-                      <Icon><bt:Image size="16" resid="Icon.16" /><bt:Image size="32" resid="Icon.32" /><bt:Image size="80" resid="Icon.80" /></Icon>
+                      <Icon><bt:Image size="16" resid="ChartIcon.16" /><bt:Image size="32" resid="ChartIcon.32" /><bt:Image size="80" resid="ChartIcon.80" /></Icon>
                       <Action xsi:type="ExecuteFunction"><FunctionName>createScatterTrendChart</FunctionName></Action>
                     </Item>
                     <Item id="CreateExplodedPieChart">
                       <Label resid="Chart.PieExp.Lbl" />
                       <Supertip><Title resid="Chart.PieExp.Lbl" /><Description resid="Chart.PieExp.Desc" /></Supertip>
-                      <Icon><bt:Image size="16" resid="Icon.16" /><bt:Image size="32" resid="Icon.32" /><bt:Image size="80" resid="Icon.80" /></Icon>
+                      <Icon><bt:Image size="16" resid="ChartIcon.16" /><bt:Image size="32" resid="ChartIcon.32" /><bt:Image size="80" resid="ChartIcon.80" /></Icon>
                       <Action xsi:type="ExecuteFunction"><FunctionName>createExplodedPieChart</FunctionName></Action>
                     </Item>
                     <Item id="CreatePercentageStackedChart">
                       <Label resid="Chart.StackPct.Lbl" />
                       <Supertip><Title resid="Chart.StackPct.Lbl" /><Description resid="Chart.StackPct.Desc" /></Supertip>
-                      <Icon><bt:Image size="16" resid="Icon.16" /><bt:Image size="32" resid="Icon.32" /><bt:Image size="80" resid="Icon.80" /></Icon>
+                      <Icon><bt:Image size="16" resid="ChartIcon.16" /><bt:Image size="32" resid="ChartIcon.32" /><bt:Image size="80" resid="ChartIcon.80" /></Icon>
                       <Action xsi:type="ExecuteFunction"><FunctionName>createPercentageStackedChart</FunctionName></Action>
                     </Item>
                     <Item id="CreateStackedLineChart">
                       <Label resid="Chart.StackLine.Lbl" />
                       <Supertip><Title resid="Chart.StackLine.Lbl" /><Description resid="Chart.StackLine.Desc" /></Supertip>
-                      <Icon><bt:Image size="16" resid="Icon.16" /><bt:Image size="32" resid="Icon.32" /><bt:Image size="80" resid="Icon.80" /></Icon>
+                      <Icon><bt:Image size="16" resid="ChartIcon.16" /><bt:Image size="32" resid="ChartIcon.32" /><bt:Image size="80" resid="ChartIcon.80" /></Icon>
                       <Action xsi:type="ExecuteFunction"><FunctionName>createStackedLineChart</FunctionName></Action>
                     </Item>
                   </Items>
@@ -113,7 +113,7 @@
                 <Control xsi:type="Button" id="OpenAdvancedChartPane">
                   <Label resid="Chart.Advanced.Lbl" />
                   <Supertip><Title resid="Chart.Advanced.Lbl" /><Description resid="Chart.Advanced.Desc" /></Supertip>
-                  <Icon><bt:Image size="16" resid="Icon.16" /><bt:Image size="32" resid="Icon.32" /><bt:Image size="80" resid="Icon.80" /></Icon>
+                  <Icon><bt:Image size="16" resid="AdvancedIcon.16" /><bt:Image size="32" resid="AdvancedIcon.32" /><bt:Image size="80" resid="AdvancedIcon.80" /></Icon>
                   <Action xsi:type="ShowTaskpane">
                     <TaskpaneId>openAdvancedChartPane</TaskpaneId>
                     <SourceLocation resid="Taskpane.Url" />
@@ -122,17 +122,17 @@
               </Group>
               <Group id="CiccTables.Group">
                 <Label resid="CiccTables.Group.Label" />
-                <Icon><bt:Image size="16" resid="Icon.16" /><bt:Image size="32" resid="Icon.32" /><bt:Image size="80" resid="Icon.80" /></Icon>
+                <Icon><bt:Image size="16" resid="FormatIcon.16" /><bt:Image size="32" resid="FormatIcon.32" /><bt:Image size="80" resid="FormatIcon.80" /></Icon>
                 <Control xsi:type="Button" id="FormatCiccTable">
                   <Label resid="Table.Format.Lbl" />
                   <Supertip><Title resid="Table.Format.Lbl" /><Description resid="Table.Format.Desc" /></Supertip>
-                  <Icon><bt:Image size="16" resid="Icon.16" /><bt:Image size="32" resid="Icon.32" /><bt:Image size="80" resid="Icon.80" /></Icon>
+                  <Icon><bt:Image size="16" resid="FormatIcon.16" /><bt:Image size="32" resid="FormatIcon.32" /><bt:Image size="80" resid="FormatIcon.80" /></Icon>
                   <Action xsi:type="ExecuteFunction"><FunctionName>formatCiccTable</FunctionName></Action>
                 </Control>
                 <Control xsi:type="Button" id="ApplyZebraStripe">
                   <Label resid="Table.Zebra.Lbl" />
                   <Supertip><Title resid="Table.Zebra.Lbl" /><Description resid="Table.Zebra.Desc" /></Supertip>
-                  <Icon><bt:Image size="16" resid="Icon.16" /><bt:Image size="32" resid="Icon.32" /><bt:Image size="80" resid="Icon.80" /></Icon>
+                  <Icon><bt:Image size="16" resid="ZebraIcon.16" /><bt:Image size="32" resid="ZebraIcon.32" /><bt:Image size="80" resid="ZebraIcon.80" /></Icon>
                   <Action xsi:type="ExecuteFunction"><FunctionName>applyZebraStripe</FunctionName></Action>
                 </Control>
               </Group>
@@ -144,14 +144,30 @@
     </Hosts>
     <Resources>
       <bt:Images>
-        <bt:Image id="Icon.16" DefaultValue="https://localhost:3000/assets/icon-16.png" />
-        <bt:Image id="Icon.32" DefaultValue="https://localhost:3000/assets/icon-32.png" />
-        <bt:Image id="Icon.64" DefaultValue="https://localhost:3000/assets/icon-64.png" />
-        <bt:Image id="Icon.80" DefaultValue="https://localhost:3000/assets/icon-80.png" />
+        <bt:Image id="ChartIcon.16" DefaultValue="https://localhost:3001/assets/chart-16.png" />
+        <bt:Image id="ChartIcon.32" DefaultValue="https://localhost:3001/assets/chart-32.png" />
+        <bt:Image id="ChartIcon.64" DefaultValue="https://localhost:3001/assets/chart-64.png" />
+        <bt:Image id="ChartIcon.80" DefaultValue="https://localhost:3001/assets/chart-80.png" />
+        <bt:Image id="AdvancedIcon.16" DefaultValue="https://localhost:3001/assets/advanced-16.png" />
+        <bt:Image id="AdvancedIcon.32" DefaultValue="https://localhost:3001/assets/advanced-32.png" />
+        <bt:Image id="AdvancedIcon.64" DefaultValue="https://localhost:3001/assets/advanced-64.png" />
+        <bt:Image id="AdvancedIcon.80" DefaultValue="https://localhost:3001/assets/advanced-80.png" />
+        <bt:Image id="FormatIcon.16" DefaultValue="https://localhost:3001/assets/format-16.png" />
+        <bt:Image id="FormatIcon.32" DefaultValue="https://localhost:3001/assets/format-32.png" />
+        <bt:Image id="FormatIcon.64" DefaultValue="https://localhost:3001/assets/format-64.png" />
+        <bt:Image id="FormatIcon.80" DefaultValue="https://localhost:3001/assets/format-80.png" />
+        <bt:Image id="ZebraIcon.16" DefaultValue="https://localhost:3001/assets/zebra-16.png" />
+        <bt:Image id="ZebraIcon.32" DefaultValue="https://localhost:3001/assets/zebra-32.png" />
+        <bt:Image id="ZebraIcon.64" DefaultValue="https://localhost:3001/assets/zebra-64.png" />
+        <bt:Image id="ZebraIcon.80" DefaultValue="https://localhost:3001/assets/zebra-80.png" />
+        <bt:Image id="Icon.16" DefaultValue="https://localhost:3001/assets/icon-16.png" />
+        <bt:Image id="Icon.32" DefaultValue="https://localhost:3001/assets/icon-32.png" />
+        <bt:Image id="Icon.64" DefaultValue="https://localhost:3001/assets/icon-64.png" />
+        <bt:Image id="Icon.80" DefaultValue="https://localhost:3001/assets/icon-80.png" />
       </bt:Images>
       <bt:Urls>
-        <bt:Url id="Commands.Url" DefaultValue="https://localhost:3000/commands.html" />
-        <bt:Url id="Taskpane.Url" DefaultValue="https://localhost:3000/taskpane.html" />
+        <bt:Url id="Commands.Url" DefaultValue="https://localhost:3001/commands.html" />
+        <bt:Url id="Taskpane.Url" DefaultValue="https://localhost:3001/taskpane.html" />
       </bt:Urls>
       <bt:ShortStrings>
         <bt:String id="CiccTools.Tab.Label" DefaultValue="中金工具" />

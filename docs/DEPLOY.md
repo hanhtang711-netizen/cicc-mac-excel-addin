@@ -1,6 +1,6 @@
 # 部署与发布
 
-本加载项分为两种互不混用的运行形态：开发旁加载固定使用 `https://localhost:3000`；生产发布必须使用已获授权、长期固定的公网 HTTPS origin（例如 `https://excel-addon.example.com`）。生产 manifest 不得引用 localhost。
+本加载项分为两种互不混用的运行形态：开发旁加载固定使用 `https://localhost:3001`（避免与 Word 加载项的 3000 端口冲突）；生产发布必须使用已获授权、长期固定的公网 HTTPS origin（例如 `https://excel-addon.example.com`）。生产 manifest 不得引用 localhost。
 
 ## 发布前提
 
@@ -54,7 +54,7 @@ cicc-addin-release/
 - origin 未变化且仅更新前端代码时，保持同一 manifest `Id` 和固定 URL；发布新的 `site/` bundle 即可，随后完全退出并重启 Excel 验证。
 - origin 变化、资源 URL 变化或 manifest 功能变化时，使用新的 origin 重新运行 release packager，执行官方 validator，并重新分发生成的 production manifest。
 - 若修改 manifest 的发布版本，递增 `<Version>`，不要更换稳定的 `<Id>`，除非明确要创建另一个加载项。
-- 开发 `manifest/manifest.dev.xml` 只允许 `https://localhost:3000`，不得作为生产分发文件。
+- 开发 `manifest/manifest.dev.xml` 只允许 `https://localhost:3001`，不得作为生产分发文件。
 
 ## 更新与回滚
 

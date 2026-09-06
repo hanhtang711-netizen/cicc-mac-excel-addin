@@ -8,7 +8,9 @@ export default defineConfig(async ({ command }) => {
   return {
     server: {
       ...(useDevelopmentHttps ? { https: await getHttpsServerOptions() } : {}),
-      port: 3000,
+      // Word 加载项保留 3000；Excel 固定使用独立端口，避免 manifest
+      // 误连到另一加载项的开发服务器而导致 Ribbon/任务窗格失效。
+      port: 3001,
       strictPort: true,
     },
     build: {

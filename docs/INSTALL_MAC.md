@@ -12,7 +12,7 @@
    npm run dev
    ```
 
-2. 在 Safari 打开 `https://localhost:3000/taskpane.html`。开发服务器使用本地自签名证书；仅在确认地址确实为 `localhost:3000` 后接受证书警告。必须先让 macOS/浏览器信任该本地证书，否则 Excel 的 WebView 可能显示空白窗格。不要对生产证书绕过警告。
+2. 在 Safari 打开 `https://localhost:3001/taskpane.html`。开发服务器使用本地自签名证书；仅在确认地址确实为 `localhost:3001` 后接受证书警告。必须先让 macOS/浏览器信任该本地证书，否则 Excel 的 WebView 可能显示空白窗格。不要对生产证书绕过警告。
 3. 完全退出 Excel（菜单栏 **Excel → 退出 Excel**，或 `⌘Q`），而不只是关闭工作簿。
 4. 在 Finder 按 `⌘⇧G`，前往：
 
@@ -23,7 +23,7 @@
 5. 如果 `wef` 不存在，就在 `Documents` 下新建它。把仓库中的 `manifest/manifest.dev.xml` 复制到 `wef`；不要复制源工作簿。
 6. 重新打开 Excel 和一个测试工作簿。确认 Ribbon 出现 **中金工具** 页签，再打开“高级生成”确认窗格能加载。
 
-若页签未出现，依次确认 Excel 已完全退出重启、文件扩展名仍为 `.xml`、manifest 校验通过、localhost 服务仍在运行，且 `https://localhost:3000/taskpane.html` 没有证书错误。
+若页签未出现，依次确认 Excel 已完全退出重启、文件扩展名仍为 `.xml`、manifest 校验通过、localhost 服务仍在运行，且 `https://localhost:3001/taskpane.html` 没有证书错误。
 
 ## 生产环境安装
 

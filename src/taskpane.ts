@@ -119,6 +119,6 @@ if (typeof Office !== "undefined") {
     const gateway = new ExcelGateway();
     const service = createAdvancedChartService(Office.context.requirements, gateway);
     initializeAdvancedChartPane(service);
-    startAutoRunner(gateway, service);
+    startAutoRunner(service);
   });
 }

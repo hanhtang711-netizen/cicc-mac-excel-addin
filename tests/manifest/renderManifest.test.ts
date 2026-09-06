@@ -10,9 +10,9 @@ describe("renderManifest", () => {
   it("replaces every BASE_URL token and keeps command action names", () => {
     const xml = renderManifest(
       "<Source>{{BASE_URL}}/commands.html</Source><Function>createColumnChart</Function>",
-      "https://localhost:3000/",
+      "https://localhost:3001/",
     );
-    expect(xml).toContain("https://localhost:3000/commands.html");
+    expect(xml).toContain("https://localhost:3001/commands.html");
     expect(xml).toContain("createColumnChart");
     expect(xml).not.toContain("{{BASE_URL}}");
   });
@@ -50,5 +50,25 @@ describe("renderManifest", () => {
     expect(advancedAction).not.toBeNull();
     expect(advancedAction?.[0]).toContain("<TaskpaneId>openAdvancedChartPane</TaskpaneId>");
     expect(advancedAction?.[0]).not.toContain("<FunctionName>");
+  });
+
+  it("assigns distinct semantic icons to each ribbon command", async () => {
+    const template = await readFile(resolve(projectRoot, "manifest/manifest.template.xml"), "utf8");
+    const iconResidFor = (controlId: string) => {
+      const control = template.match(
+        new RegExp(`<Control xsi:type="(?:Menu|Button)" id="${controlId}">[\\s\\S]*?<Icon><bt:Image size="16" resid="([^"]+)"`),
+      );
+      return control?.[1];
+    };
+
+    expect(iconResidFor("CreateChartMenu")).toBe("ChartIcon.16");
+    expect(iconResidFor("OpenAdvancedChartPane")).toBe("AdvancedIcon.16");
+    expect(iconResidFor("FormatCiccTable")).toBe("FormatIcon.16");
+    expect(iconResidFor("ApplyZebraStripe")).toBe("ZebraIcon.16");
+    for (const iconId of ["ChartIcon", "AdvancedIcon", "FormatIcon", "ZebraIcon"]) {
+      for (const size of [16, 32, 64, 80]) {
+        expect(template).toContain(`<bt:Image id="${iconId}.${size}"`);
+      }
+    }
   });
 });

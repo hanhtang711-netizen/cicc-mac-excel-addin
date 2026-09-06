@@ -17,7 +17,7 @@ cd "/Users/sky/Documents/CICC plugin/.worktrees/cicc-mac-excel-addin"
 npm run dev
 ```
 
-保持该终端窗口运行；若显示 `Port 3000 is already in use`，说明服务已经启动，无需重复运行。
+保持该终端窗口运行。Excel 固定使用 `https://localhost:3001`，与 Word 加载项的 `3000` 端口隔离；若提示 `Port 3001 is already in use`，先停止占用该端口的进程，再重新启动本加载项，不能假定它就是 Excel 服务。
 
 随后打开 Excel：
 

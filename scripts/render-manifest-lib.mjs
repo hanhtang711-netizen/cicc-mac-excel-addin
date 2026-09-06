@@ -1,6 +1,6 @@
 export function renderManifest(template, rawBaseUrl) {
   const baseUrl = rawBaseUrl.replace(/\/$/, "");
-  const isLocalHttps = baseUrl === "https://localhost:3000";
+  const isLocalHttps = baseUrl === "https://localhost:3001";
   if (!baseUrl.startsWith("https://") || (!isLocalHttps && baseUrl.includes("localhost"))) {
     throw new Error("Base URL must use HTTPS");
   }
