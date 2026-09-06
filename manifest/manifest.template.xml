@@ -10,8 +10,8 @@
   <DefaultLocale>zh-CN</DefaultLocale>
   <DisplayName DefaultValue="中金工具" />
   <Description DefaultValue="中金 Excel 图表与表格工具" />
-  <IconUrl DefaultValue="{{BASE_URL}}/assets/icon-32.png" />
-  <HighResolutionIconUrl DefaultValue="{{BASE_URL}}/assets/icon-80.png" />
+  <IconUrl DefaultValue="{{BASE_URL}}/assets/chart-32.png" />
+  <HighResolutionIconUrl DefaultValue="{{BASE_URL}}/assets/chart-80.png" />
   <SupportUrl DefaultValue="{{BASE_URL}}/taskpane.html" />
   <AppDomains>
     <AppDomain>{{BASE_URL}}</AppDomain>

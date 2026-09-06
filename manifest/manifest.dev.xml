@@ -10,8 +10,8 @@
   <DefaultLocale>zh-CN</DefaultLocale>
   <DisplayName DefaultValue="中金工具" />
   <Description DefaultValue="中金 Excel 图表与表格工具" />
-  <IconUrl DefaultValue="https://localhost:3001/assets/icon-32.png" />
-  <HighResolutionIconUrl DefaultValue="https://localhost:3001/assets/icon-80.png" />
+  <IconUrl DefaultValue="https://localhost:3001/assets/chart-32.png" />
+  <HighResolutionIconUrl DefaultValue="https://localhost:3001/assets/chart-80.png" />
   <SupportUrl DefaultValue="https://localhost:3001/taskpane.html" />
   <AppDomains>
     <AppDomain>https://localhost:3001</AppDomain>

@@ -71,4 +71,11 @@ describe("renderManifest", () => {
       }
     }
   });
+
+  it("uses the chart mark as the Excel developer-add-in icon", async () => {
+    const template = await readFile(resolve(projectRoot, "manifest/manifest.template.xml"), "utf8");
+
+    expect(template).toContain('<IconUrl DefaultValue="{{BASE_URL}}/assets/chart-32.png" />');
+    expect(template).toContain('<HighResolutionIconUrl DefaultValue="{{BASE_URL}}/assets/chart-80.png" />');
+  });
 });
