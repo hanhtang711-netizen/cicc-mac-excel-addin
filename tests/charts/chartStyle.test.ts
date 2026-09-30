@@ -22,7 +22,7 @@ describe("CICC chart style", () => {
       heightPoints: cmToPoints(6),
       legendPosition: "bottom",
       legendOverlay: false,
-      legendFontSizePoints: 9,
+      legendFontSizePoints: 7,
       showTitle: false,
       showDataLabels: false,
       showGridlines: false,
