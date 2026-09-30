@@ -13,10 +13,10 @@ export const CICC_SERIES_COLORS = [
 export const cmToPoints = (centimeters: number): number => centimeters * 28.3464567;
 
 const WHITE = "#FFFFFF";
-// Fits the 3–12 row chart canvas in the "中金图表底稿版式", while retaining 16:9.
+// 4.47 × 2.87 inches, the preferred visual proportion for the working paper.
 // Placement deliberately remains selection-relative.
-const CHART_HEIGHT_CM = 6;
-const CHART_WIDTH_CM = (16 / 9) * CHART_HEIGHT_CM;
+const CHART_HEIGHT_CM = 2.87 * 2.54;
+const CHART_WIDTH_CM = 4.47 * 2.54;
 const AXIS_SIZE_POINTS = 8;
 const LEGEND_SIZE_POINTS = 7;
 const LINE_WIDTH_POINTS = 1.5;

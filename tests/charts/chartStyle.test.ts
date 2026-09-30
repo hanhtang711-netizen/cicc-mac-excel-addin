@@ -18,8 +18,8 @@ describe("CICC chart style", () => {
 
     expect(style).toMatchObject({
       seriesStyle: "line",
-      widthPoints: cmToPoints((16 / 9) * 6),
-      heightPoints: cmToPoints(6),
+      widthPoints: cmToPoints(4.47 * 2.54),
+      heightPoints: cmToPoints(2.87 * 2.54),
       legendPosition: "bottom",
       legendOverlay: false,
       legendFontSizePoints: 7,
@@ -45,9 +45,9 @@ describe("CICC chart style", () => {
   it("uses the fixed dimensions and percentage precision", () => {
     const style = buildChartStylePlan({ kind: "column", seriesCount: 2, sourceFormat: "0.0%" });
 
-    expect(style.widthPoints).toBeCloseTo(cmToPoints((16 / 9) * 6), 4);
-    expect(style.heightPoints).toBeCloseTo(cmToPoints(6), 4);
-    expect(style.widthPoints / style.heightPoints).toBeCloseTo(16 / 9, 8);
+    expect(style.widthPoints).toBeCloseTo(cmToPoints(4.47 * 2.54), 4);
+    expect(style.heightPoints).toBeCloseTo(cmToPoints(2.87 * 2.54), 4);
+    expect(style.widthPoints / style.heightPoints).toBeCloseTo(4.47 / 2.87, 8);
     expect(style.valueAxisNumberFormat).toBe("0.0%");
     expect(style.legendPosition).toBe("bottom");
   });

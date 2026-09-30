@@ -109,8 +109,8 @@ describe("chart workflows", () => {
       showDataLabels: false,
       categoryAxisNumberFormat: "yyyy-mm-dd",
     });
-    expect(style.widthPoints).toBeCloseTo(302.3622048);
-    expect(style.heightPoints).toBeCloseTo(170.0787402);
+    expect(style.widthPoints).toBeCloseTo(321.84000008046);
+    expect(style.heightPoints).toBeCloseTo(206.64000005166002);
   });
 
   it("does not turn a standalone data title into a chart title", async () => {

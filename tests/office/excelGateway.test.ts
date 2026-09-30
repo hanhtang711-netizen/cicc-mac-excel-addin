@@ -21,8 +21,8 @@ const plan: ChartPlan = {
 const style: ChartStylePlan = {
   seriesColors: ["#640000", "#8A2626"],
   seriesStyle: "fill-no-border",
-  widthPoints: 302.3622048,
-  heightPoints: 170.0787402,
+  widthPoints: 321.84000008046,
+  heightPoints: 206.64000005166002,
   legendPosition: "bottom",
   legendOverlay: false,
   legendFontSizePoints: 9,
@@ -173,8 +173,8 @@ describe("ExcelGateway.createChart", () => {
 
     expect(fake.chartsAdd).toHaveBeenCalledWith("ColumnClustered", fake.sourceRange, "Columns");
     expect(fake.chart).toMatchObject({
-      width: 302.3622048,
-      height: 170.0787402,
+      width: 321.84000008046,
+      height: 206.64000005166002,
       left: 338,
       top: 40,
     });
